@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>MTG Card Scanner</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #111;
+      color: white;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+    }
+
+    header {
+      height: 56px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background: #222;
+
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #scanner {
+      position: relative;
+
+      width: 100%;
+      height: calc(100vh - 56px);
+
+      overflow: hidden;
+    }
+
+    #camera {
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+
+      background: black;
+    }
+
+    /*
+     * MTGカードのガイド
+     */
+    #cardFrame {
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      transform: translate(-50%, -50%);
+
+      width: 72vw;
+
+      aspect-ratio: 0.716;
+
+      border: 3px solid white;
+
+      border-radius: 12px;
+
+      box-shadow:
+        0 0 0 9999px rgba(0, 0, 0, 0.45);
+
+      pointer-events: none;
+    }
+
+    #status {
+      position: absolute;
+
+      top: 15px;
+      left: 15px;
+      right: 15px;
+
+      padding: 12px;
+
+      border-radius: 8px;
+
+      background: rgba(0, 0, 0, 0.75);
+
+      text-align: center;
+
+      font-size: 14px;
+    }
+
+    #startButton {
+      position: absolute;
+
+      left: 50%;
+      top: 50%;
+
+      transform: translate(-50%, -50%);
+
+      width: 80%;
+      max-width: 320px;
+
+      padding: 16px;
+
+      border: none;
+      border-radius: 10px;
+
+      background: white;
+      color: #111;
+
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #counter {
+      position: absolute;
+
+      bottom: 20px;
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      padding: 10px 18px;
+
+      border-radius: 20px;
+
+      background: rgba(0, 0, 0, 0.75);
+
+      white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  MTG Card Scanner
+</header>
+
+<div id="scanner">
+
+  <video
+    id="camera"
+    autoplay
+    playsinline>
+  </video>
+
+  <div id="cardFrame"></div>
+
+  <div id="status">
+    「カメラを起動」を押してください
+  </div>
+
+  <div id="counter">
+    スキャン済み：0枚
+  </div>
+
+  <button id="startButton">
+    📷 カメラを起動
+  </button>
+
+</div>
+
+<script>
+
+const video =
+  document.getElementById("camera");
+
+const status =
+  document.getElementById("status");
+
+const startButton =
+  document.getElementById("startButton");
+
+
+async function startCamera() {
+
+  try {
+
+    status.textContent =
+      "カメラへのアクセスを確認しています…";
+
+    if (!navigator.mediaDevices) {
+
+      throw new Error(
+        "このブラウザではカメラAPIが利用できません"
+      );
+
+    }
+
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video: {
+          facingMode: {
+            ideal: "environment"
+          },
+
+          width: {
+            ideal: 1920
+          },
+
+          height: {
+            ideal: 1080
+          }
+        },
+
+        audio: false
+
+      });
+
+
+    video.srcObject = stream;
+
+    await video.play();
+
+
+    startButton.style.display =
+      "none";
+
+    status.textContent =
+      "カメラ起動完了。カードを枠内に入れてください";
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.innerHTML =
+      "<b>カメラを起動できませんでした</b>" +
+      "<br><br>" +
+      "エラー：" +
+      error.name +
+      "<br>" +
+      error.message;
+
+  }
+
+}
+
+
+startButton.addEventListener(
+  "click",
+  startCamera
+);
+
+</script>
+
+</body>
+</html>
