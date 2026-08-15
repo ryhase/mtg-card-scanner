@@ -10,6 +10,9 @@
 
   <title>MTG Card Scanner</title>
 
+  <!-- OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -19,10 +22,13 @@
     body {
       margin: 0;
       padding: 0;
+
       width: 100%;
       height: 100%;
+
       background: #111;
       color: white;
+
       font-family:
         -apple-system,
         BlinkMacSystemFont,
@@ -62,9 +68,6 @@
       background: black;
     }
 
-    /*
-     * MTGカードのガイド
-     */
     #cardFrame {
       position: absolute;
 
@@ -105,13 +108,14 @@
       font-size: 14px;
     }
 
-    #startButton {
+    #startButton,
+    #scanButton {
+
       position: absolute;
 
       left: 50%;
-      top: 50%;
 
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
 
       width: 80%;
       max-width: 320px;
@@ -119,6 +123,7 @@
       padding: 16px;
 
       border: none;
+
       border-radius: 10px;
 
       background: white;
@@ -128,7 +133,17 @@
       font-weight: bold;
     }
 
+    #startButton {
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #scanButton {
+      bottom: 70px;
+    }
+
     #counter {
+
       position: absolute;
 
       bottom: 20px;
@@ -144,6 +159,116 @@
 
       white-space: nowrap;
     }
+
+    /*
+     * OCR用
+     */
+    #captureCanvas,
+    #nameCanvas {
+
+      display: none;
+
+    }
+
+    /*
+     * 結果画面
+     */
+    #result {
+
+      display: none;
+
+      position: absolute;
+
+      inset: 0;
+
+      overflow-y: auto;
+
+      background: rgba(0, 0, 0, 0.95);
+
+      padding: 20px;
+
+    }
+
+    #resultCard {
+
+      max-width: 420px;
+
+      margin: 20px auto;
+
+    }
+
+    #cardImage {
+
+      display: block;
+
+      width: 55%;
+
+      max-width: 250px;
+
+      margin: 0 auto 20px;
+
+      border-radius: 10px;
+
+    }
+
+    #cardName {
+
+      font-size: 26px;
+
+      font-weight: bold;
+
+      text-align: center;
+
+      margin-bottom: 10px;
+
+    }
+
+    #ocrText {
+
+      padding: 12px;
+
+      background: #222;
+
+      border-radius: 8px;
+
+      margin-bottom: 20px;
+
+      white-space: pre-wrap;
+
+      word-break: break-word;
+
+    }
+
+    button.action {
+
+      display: block;
+
+      width: 100%;
+
+      max-width: 350px;
+
+      margin: 12px auto;
+
+      padding: 16px;
+
+      border: none;
+
+      border-radius: 10px;
+
+      font-size: 18px;
+
+      font-weight: bold;
+
+    }
+
+    #retryButton {
+
+      background: #444;
+
+      color: white;
+
+    }
+
   </style>
 </head>
 
@@ -167,17 +292,65 @@
     「カメラを起動」を押してください
   </div>
 
-  <div id="counter">
-    スキャン済み：0枚
-  </div>
-
   <button id="startButton">
     📷 カメラを起動
   </button>
 
+  <button
+    id="scanButton"
+    style="display:none;">
+    🔍 カードを読み取る
+  </button>
+
+  <div id="counter">
+    スキャン済み：0枚
+  </div>
+
+
+  <canvas id="captureCanvas"></canvas>
+  <canvas id="nameCanvas"></canvas>
+
+
+  <!-- 結果 -->
+
+  <div id="result">
+
+    <div id="resultCard">
+
+      <img
+        id="cardImage"
+        src=""
+        alt="カード">
+
+      <div id="cardName">
+        OCR結果
+      </div>
+
+      <div id="ocrText"></div>
+
+      <button
+        id="retryButton"
+        class="action">
+        再スキャン
+      </button>
+
+    </div>
+
+  </div>
+
 </div>
 
+
 <script>
+
+let stream = null;
+
+let worker = null;
+
+
+/**
+ * DOM
+ */
 
 const video =
   document.getElementById("camera");
@@ -188,45 +361,56 @@ const status =
 const startButton =
   document.getElementById("startButton");
 
+const scanButton =
+  document.getElementById("scanButton");
+
+const result =
+  document.getElementById("result");
+
+const retryButton =
+  document.getElementById("retryButton");
+
+
+/**
+ * カメラ起動
+ */
 
 async function startCamera() {
 
   try {
 
     status.textContent =
-      "カメラへのアクセスを確認しています…";
+      "カメラを起動しています…";
 
-    if (!navigator.mediaDevices) {
 
-      throw new Error(
-        "このブラウザではカメラAPIが利用できません"
-      );
+    stream =
+      await navigator.mediaDevices
+        .getUserMedia({
 
-    }
+          video: {
 
-    const stream =
-      await navigator.mediaDevices.getUserMedia({
+            facingMode: {
+              ideal: "environment"
+            },
 
-        video: {
-          facingMode: {
-            ideal: "environment"
+            width: {
+              ideal: 1920
+            },
+
+            height: {
+              ideal: 1080
+            }
+
           },
 
-          width: {
-            ideal: 1920
-          },
+          audio: false
 
-          height: {
-            ideal: 1080
-          }
-        },
-
-        audio: false
-
-      });
+        });
 
 
-    video.srcObject = stream;
+    video.srcObject =
+      stream;
+
 
     await video.play();
 
@@ -234,8 +418,13 @@ async function startCamera() {
     startButton.style.display =
       "none";
 
+
+    scanButton.style.display =
+      "block";
+
+
     status.textContent =
-      "カメラ起動完了。カードを枠内に入れてください";
+      "カードを枠内に入れてください";
 
 
   } catch (error) {
@@ -245,7 +434,6 @@ async function startCamera() {
     status.innerHTML =
       "<b>カメラを起動できませんでした</b>" +
       "<br><br>" +
-      "エラー：" +
       error.name +
       "<br>" +
       error.message;
@@ -254,6 +442,350 @@ async function startCamera() {
 
 }
 
+
+/**
+ * OCR Worker準備
+ */
+
+async function initializeOCR() {
+
+  if (worker) {
+    return;
+  }
+
+
+  status.textContent =
+    "OCRエンジンを準備しています…";
+
+
+  worker =
+    await Tesseract.createWorker(
+      "jpn+eng",
+      1,
+      {
+
+        logger: function(info) {
+
+          if (
+            info.status &&
+            info.progress
+          ) {
+
+            const percent =
+              Math.round(
+                info.progress * 100
+              );
+
+            status.textContent =
+              "OCR準備中… " +
+              percent +
+              "%";
+
+          }
+
+        }
+
+      }
+    );
+
+
+  /*
+   * カード名は基本的に1行
+   */
+
+  await worker.setParameters({
+
+    tessedit_pageseg_mode: "7"
+
+  });
+
+
+  status.textContent =
+    "カードを枠内に入れてください";
+
+}
+
+
+/**
+ * カメラ画像を取得
+ */
+
+function captureFrame() {
+
+  const canvas =
+    document.getElementById(
+      "captureCanvas"
+    );
+
+
+  canvas.width =
+    video.videoWidth;
+
+  canvas.height =
+    video.videoHeight;
+
+
+  const ctx =
+    canvas.getContext("2d");
+
+
+  ctx.drawImage(
+
+    video,
+
+    0,
+    0,
+
+    canvas.width,
+    canvas.height
+
+  );
+
+
+  return canvas;
+
+}
+
+
+/**
+ * カード名部分を切り出す
+ */
+
+function cropCardName(
+  source
+) {
+
+  const width =
+    source.width;
+
+  const height =
+    source.height;
+
+
+  /*
+   * 現在のガイド枠
+   */
+
+  const cardWidth =
+    width * 0.72;
+
+  const cardHeight =
+    cardWidth / 0.716;
+
+
+  const left =
+    (width - cardWidth) / 2;
+
+  const top =
+    (height - cardHeight) / 2;
+
+
+  /*
+   * カード名領域
+   */
+
+  const x =
+    left + cardWidth * 0.05;
+
+  const y =
+    top + cardHeight * 0.025;
+
+  const w =
+    cardWidth * 0.90;
+
+  const h =
+    cardHeight * 0.12;
+
+
+  const canvas =
+    document.getElementById(
+      "nameCanvas"
+    );
+
+
+  /*
+   * OCR用に2倍
+   */
+
+  canvas.width =
+    w * 2;
+
+  canvas.height =
+    h * 2;
+
+
+  const ctx =
+    canvas.getContext("2d");
+
+
+  ctx.imageSmoothingEnabled =
+    false;
+
+
+  ctx.drawImage(
+
+    source,
+
+    x,
+    y,
+    w,
+    h,
+
+    0,
+    0,
+
+    canvas.width,
+    canvas.height
+
+  );
+
+
+  return canvas;
+
+}
+
+
+/**
+ * OCR実行
+ */
+
+async function recognizeCardName() {
+
+  if (!worker) {
+
+    await initializeOCR();
+
+  }
+
+
+  const source =
+    captureFrame();
+
+
+  const cropped =
+    cropCardName(
+      source
+    );
+
+
+  status.textContent =
+    "カード名を読み取っています…";
+
+
+  const result =
+    await worker.recognize(
+      cropped
+    );
+
+
+  let text =
+    result.data.text || "";
+
+
+  text =
+    text
+      .replace(/\n/g, " ")
+      .replace(/\r/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+
+  return text;
+
+}
+
+
+/**
+ * 読み取りボタン
+ */
+
+scanButton.addEventListener(
+  "click",
+  async function() {
+
+    try {
+
+      scanButton.disabled =
+        true;
+
+
+      await initializeOCR();
+
+
+      const text =
+        await recognizeCardName();
+
+
+      console.log(
+        "OCR:",
+        text
+      );
+
+
+      result.style.display =
+        "block";
+
+
+      document
+        .getElementById(
+          "ocrText"
+        )
+        .textContent =
+        text || "読み取れませんでした";
+
+
+      document
+        .getElementById(
+          "cardName"
+        )
+        .textContent =
+        text || "カード名を認識できません";
+
+
+      status.textContent =
+        "認識結果を確認してください";
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      status.textContent =
+        "OCRエラー：" +
+        error.message;
+
+    }
+
+
+    scanButton.disabled =
+      false;
+
+  }
+);
+
+
+/**
+ * 再スキャン
+ */
+
+retryButton.addEventListener(
+  "click",
+  function() {
+
+    result.style.display =
+      "none";
+
+
+    status.textContent =
+      "カードを枠内に入れてください";
+
+  }
+);
+
+
+/**
+ * 起動
+ */
 
 startButton.addEventListener(
   "click",
