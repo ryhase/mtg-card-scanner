@@ -347,7 +347,7 @@ button {
  * Google Apps Script Web App
  */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzgIF2qSjp1CWpcw8-MjKYNeEE7X3CH7Ro4f03rx81CFkkSCczUEo7Ru2_PcaIdH6Rf/exec";
+  "https://script.google.com/macros/s/AKfycbwQnZQBz_PeHKXCp2eerE7AuXGa7ZWmvQSev3yfNVRB_G2AbkSTNjyKPxdwfwQz0j1L/exec";
 
 
 let stream = null;
@@ -569,114 +569,66 @@ async function identifyCard() {
 
   try {
 
-    scanButton.disabled =
-      true;
-
-
     status.textContent =
-      "カード画像を撮影しています…";
-
-
-    const image =
-      captureImage();
-
-
-    /*
-     * 結果画面に
-     * 撮影画像を表示
-     */
-
-    capturedImage.src =
-      image;
-
-
-    status.textContent =
-      "Geminiがカードを判定しています…";
-
-
-    const base64 =
-      extractBase64(
-        image
-      );
-
+      "Apps Scriptに接続しています…";
 
     const response =
       await fetch(
-
         API_URL,
-
         {
-
           method: "POST",
 
           headers: {
-
             "Content-Type":
               "text/plain;charset=utf-8"
-
           },
 
-          body:
-            JSON.stringify({
-
-              image: base64
-
-            })
-
+          body: JSON.stringify({
+            test: true
+          })
         }
-
       );
-
-
-    const data =
-      await response.json();
 
 
     console.log(
-      "Apps Script:",
-      data
+      "HTTP status:",
+      response.status
     );
 
 
-    if (!data.success) {
-
-      throw new Error(
-        data.error ||
-        "カード判定に失敗しました"
-      );
-
-    }
+    const text =
+      await response.text();
 
 
-    lastResult =
-      data.result;
-
-
-    showResult(
-      data.result
+    console.log(
+      "Response:",
+      text
     );
+
+
+    alert(
+      "Apps Scriptからの返答:\n\n" +
+      text
+    );
+
+
+    status.textContent =
+      "通信テスト完了";
 
 
   } catch (error) {
 
     console.error(error);
 
-    errorElement.textContent =
-      "エラー：\n" +
-      error.message;
+    alert(
+      "通信エラー:\n\n" +
+      error.name +
+      "\n" +
+      error.message
+    );
 
-    cardName.textContent =
-      "判定できませんでした";
-
-
-    result.style.display =
-      "block";
-
-
-  } finally {
-
-    scanButton.disabled =
-      false;
+    status.textContent =
+      "通信エラー";
 
   }
 
