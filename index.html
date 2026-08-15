@@ -347,7 +347,7 @@ button {
  * Google Apps Script Web App
  */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzcvrDbwa96p1j1UAqA641diRhE_4h3A6PEA83PidiDqST15uM3HOGliRXBdWs9pgOf/exec";
+  "https://script.google.com/macros/s/AKfycbyA7Jwd6SDTMSjz1R3kv2QSU165q_4zH4fXnsxC_mhIQYgC_Iz9muKpDtxlM64PMpzW/exec";
 
 
 let stream = null;
@@ -564,13 +564,34 @@ function extractBase64(
 /*
  * Geminiへ送信
  */
-
 async function identifyCard() {
 
   try {
 
+    scanButton.disabled = true;
+
     status.textContent =
-      "Apps Scriptに接続しています…";
+      "カード画像を撮影しています…";
+
+
+    // カメラから画像を取得
+    const image =
+      captureImage();
+
+
+    // 撮影画像を結果画面に表示
+    capturedImage.src = image;
+
+
+    status.textContent =
+      "Geminiがカードを判定しています…";
+
+
+    // data:image/jpeg;base64,XXXX
+    // からBase64部分だけ取得
+    const base64 =
+      extractBase64(image);
+
 
     const response =
       await fetch(
@@ -584,54 +605,67 @@ async function identifyCard() {
           },
 
           body: JSON.stringify({
-            test: true
+            image: base64
           })
         }
       );
 
 
+    if (!response.ok) {
+      throw new Error(
+        "HTTPエラー: " +
+        response.status
+      );
+    }
+
+
+    const data =
+      await response.json();
+
+
     console.log(
-      "HTTP status:",
-      response.status
+      "Apps Script:",
+      data
     );
 
 
-    const text =
-      await response.text();
+    if (!data.success) {
+      throw new Error(
+        data.error ||
+        "カード判定に失敗しました"
+      );
+    }
 
 
-    console.log(
-      "Response:",
-      text
+    lastResult =
+      data.result;
+
+
+    showResult(
+      data.result
     );
-
-
-    alert(
-      "Apps Scriptからの返答:\n\n" +
-      text
-    );
-
-
-    status.textContent =
-      "通信テスト完了";
 
 
   } catch (error) {
 
     console.error(error);
 
-    alert(
-      "通信エラー:\n\n" +
-      error.name +
-      "\n" +
-      error.message
-    );
+    errorElement.textContent =
+      "エラー：\n" +
+      error.message;
 
-    status.textContent =
-      "通信エラー";
+    cardName.textContent =
+      "判定できませんでした";
+
+    result.style.display =
+      "block";
+
+
+  } finally {
+
+    scanButton.disabled = false;
 
   }
-
 }
 
 
