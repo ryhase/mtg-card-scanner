@@ -7,12 +7,9 @@
 
 <meta
   name="viewport"
-  content="width=device-width,
-           initial-scale=1.0">
+  content="width=device-width, initial-scale=1.0">
 
 <title>MTG Card Scanner</title>
-
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
 
@@ -22,7 +19,6 @@
 
 html,
 body {
-
   margin: 0;
   padding: 0;
 
@@ -41,7 +37,6 @@ body {
 }
 
 header {
-
   height: 56px;
 
   display: flex;
@@ -50,12 +45,11 @@ header {
 
   background: #222;
 
-  font-weight: bold;
   font-size: 18px;
+  font-weight: bold;
 }
 
 #scanner {
-
   position: relative;
 
   width: 100%;
@@ -65,7 +59,6 @@ header {
 }
 
 #camera {
-
   width: 100%;
   height: 100%;
 
@@ -75,7 +68,6 @@ header {
 }
 
 #cardFrame {
-
   position: absolute;
 
   left: 50%;
@@ -88,20 +80,17 @@ header {
 
   aspect-ratio: 0.716;
 
-  border:
-    3px solid white;
+  border: 3px solid white;
 
   border-radius: 12px;
 
   box-shadow:
-    0 0 0 9999px
-    rgba(0,0,0,0.45);
+    0 0 0 9999px rgba(0, 0, 0, 0.45);
 
   pointer-events: none;
 }
 
 #status {
-
   position: absolute;
 
   top: 15px;
@@ -110,10 +99,10 @@ header {
 
   padding: 12px;
 
-  background:
-    rgba(0,0,0,0.75);
-
   border-radius: 8px;
+
+  background:
+    rgba(0, 0, 0, 0.75);
 
   text-align: center;
 
@@ -121,15 +110,12 @@ header {
 }
 
 button {
-
   border: none;
-
   border-radius: 10px;
 
-  padding: 15px;
+  padding: 16px;
 
-  font-size: 17px;
-
+  font-size: 18px;
   font-weight: bold;
 }
 
@@ -140,8 +126,7 @@ button {
 
   left: 50%;
 
-  transform:
-    translateX(-50%);
+  transform: translateX(-50%);
 
   width: 80%;
   max-width: 320px;
@@ -151,7 +136,6 @@ button {
 }
 
 #startButton {
-
   top: 50%;
 
   transform:
@@ -159,16 +143,13 @@ button {
 }
 
 #scanButton {
-
   bottom: 70px;
 }
 
 #counter {
-
   position: absolute;
 
   bottom: 20px;
-
   left: 50%;
 
   transform:
@@ -179,12 +160,9 @@ button {
   border-radius: 20px;
 
   background:
-    rgba(0,0,0,0.75);
-}
+    rgba(0, 0, 0, 0.75);
 
-canvas {
-
-  display: none;
+  white-space: nowrap;
 }
 
 #result {
@@ -195,71 +173,84 @@ canvas {
 
   inset: 0;
 
-  background:
-    rgba(0,0,0,0.96);
-
   overflow-y: auto;
+
+  background:
+    rgba(0, 0, 0, 0.96);
 
   padding: 20px;
 }
 
 #resultCard {
 
-  max-width: 420px;
+  max-width: 430px;
 
   margin: 20px auto;
 }
 
-#cardImage {
-
-  width: 55%;
-
-  max-width: 250px;
+#capturedImage {
 
   display: block;
 
-  margin: auto;
+  width: 65%;
+
+  max-width: 280px;
+
+  margin: 0 auto 20px;
 
   border-radius: 10px;
 }
 
 #cardName {
 
-  margin-top: 20px;
-
   text-align: center;
 
-  font-size: 26px;
+  font-size: 28px;
 
   font-weight: bold;
+
+  margin: 15px 0;
 }
 
-#ocrText {
-
-  margin-top: 20px;
-
-  padding: 15px;
+.info {
 
   background: #222;
 
-  border-radius: 8px;
+  border-radius: 10px;
 
-  word-break: break-word;
+  padding: 15px;
 
-  white-space: pre-wrap;
+  line-height: 1.8;
+
+  margin-bottom: 20px;
 }
 
-#retryButton {
+.action {
 
   display: block;
 
   width: 100%;
 
-  margin-top: 20px;
+  margin: 12px 0;
+
+  font-size: 18px;
+}
+
+#registerButton {
+
+  background: white;
+  color: #111;
+}
+
+#retryButton {
 
   background: #444;
-
   color: white;
+}
+
+#error {
+  color: #ff7777;
+  white-space: pre-wrap;
 }
 
 </style>
@@ -269,880 +260,546 @@ canvas {
 <body>
 
 <header>
-MTG Card Scanner
+  MTG Card Scanner
 </header>
 
 <div id="scanner">
 
-<video
-  id="camera"
-  autoplay
-  playsinline>
-</video>
+  <video
+    id="camera"
+    autoplay
+    playsinline>
+  </video>
 
-<div id="cardFrame"></div>
+  <div id="cardFrame"></div>
 
-<div id="status">
-「カメラを起動」を押してください
+  <div id="status">
+    「カメラを起動」を押してください
+  </div>
+
+  <button
+    id="startButton">
+    📷 カメラを起動
+  </button>
+
+  <button
+    id="scanButton"
+    style="display:none">
+    🤖 Geminiでカード判定
+  </button>
+
+  <div id="counter">
+    スキャン済み：0枚
+  </div>
+
+
+  <!-- 結果 -->
+
+  <div id="result">
+
+    <div id="resultCard">
+
+      <img
+        id="capturedImage"
+        alt="撮影したカード">
+
+      <div id="cardName">
+        判定中…
+      </div>
+
+      <div
+        id="cardInfo"
+        class="info">
+      </div>
+
+      <div
+        id="error">
+      </div>
+
+      <button
+        id="registerButton"
+        class="action">
+        ✅ 登録
+      </button>
+
+      <button
+        id="retryButton"
+        class="action">
+        🔄 再スキャン
+      </button>
+
+    </div>
+
+  </div>
+
 </div>
 
-<button id="startButton">
-📷 カメラを起動
-</button>
 
-<button
-  id="scanButton"
+<canvas
+  id="canvas"
   style="display:none">
-
-🔍 カードを読み取る
-
-</button>
-
-<div id="counter">
-スキャン済み：0枚
-</div>
-
-<canvas id="captureCanvas"></canvas>
-
-<canvas id="cardCanvas"></canvas>
-
-<canvas id="nameCanvas"></canvas>
-
-<div id="result">
-
-<div id="resultCard">
-
-<img
-  id="cardImage"
-  alt="card">
-
-<div id="cardName">
-OCR結果
-</div>
-
-<div id="ocrText">
-</div>
-
-<button id="retryButton">
-再スキャン
-</button>
-
-</div>
-
-</div>
-
-</div>
+</canvas>
 
 
 <script>
 
+/*
+ * Google Apps Script Web App
+ */
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbzgIF2qSjp1CWpcw8-MjKYNeEE7X3CH7Ro4f03rx81CFkkSCczUEo7Ru2_PcaIdH6Rf/exec";
+
+
 let stream = null;
 
-let worker = null;
+let lastResult = null;
 
 
 /* DOM */
 
 const video =
-document.getElementById(
-  "camera"
-);
+  document.getElementById(
+    "camera"
+  );
 
 const status =
-document.getElementById(
-  "status"
-);
+  document.getElementById(
+    "status"
+  );
 
 const startButton =
-document.getElementById(
-  "startButton"
-);
+  document.getElementById(
+    "startButton"
+  );
 
 const scanButton =
-document.getElementById(
-  "scanButton"
-);
+  document.getElementById(
+    "scanButton"
+  );
 
 const result =
-document.getElementById(
-  "result"
-);
+  document.getElementById(
+    "result"
+  );
+
+const capturedImage =
+  document.getElementById(
+    "capturedImage"
+  );
+
+const cardName =
+  document.getElementById(
+    "cardName"
+  );
+
+const cardInfo =
+  document.getElementById(
+    "cardInfo"
+  );
+
+const errorElement =
+  document.getElementById(
+    "error"
+  );
+
+const registerButton =
+  document.getElementById(
+    "registerButton"
+  );
 
 const retryButton =
-document.getElementById(
-  "retryButton"
-);
+  document.getElementById(
+    "retryButton"
+  );
+
+const canvas =
+  document.getElementById(
+    "canvas"
+  );
 
 
-/* カメラ */
+/*
+ * カメラ起動
+ */
 
 async function startCamera() {
 
-try {
+  try {
 
-status.textContent =
-"カメラを起動しています…";
+    status.textContent =
+      "カメラを起動しています…";
 
-stream =
-await navigator
-.mediaDevices
-.getUserMedia({
 
-video: {
+    stream =
+      await navigator
+        .mediaDevices
+        .getUserMedia({
 
-facingMode: {
-ideal: "environment"
-},
+          video: {
 
-width: {
-ideal: 1920
-},
+            facingMode: {
+              ideal: "environment"
+            },
 
-height: {
-ideal: 1080
+            width: {
+              ideal: 1920
+            },
+
+            height: {
+              ideal: 1080
+            }
+
+          },
+
+          audio: false
+
+        });
+
+
+    video.srcObject =
+      stream;
+
+
+    await video.play();
+
+
+    startButton.style.display =
+      "none";
+
+    scanButton.style.display =
+      "block";
+
+
+    status.textContent =
+      "カードを枠内に合わせてください";
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.textContent =
+      "カメラエラー";
+
+    errorElement.textContent =
+      error.name +
+      "\n" +
+      error.message;
+
+  }
+
 }
 
-},
 
-audio: false
+/*
+ * カメラ画像をJPEG化
+ */
 
-});
+function captureImage() {
+
+  const width =
+    video.videoWidth;
+
+  const height =
+    video.videoHeight;
 
 
-video.srcObject =
-stream;
+  /*
+   * 少し大きめに撮影
+   */
 
-await video.play();
+  canvas.width =
+    width;
+
+  canvas.height =
+    height;
 
 
-startButton.style.display =
-"none";
+  const ctx =
+    canvas.getContext("2d");
 
-scanButton.style.display =
-"block";
 
-status.textContent =
-"カードを枠内に合わせてください";
+  ctx.drawImage(
+
+    video,
+
+    0,
+    0,
+
+    width,
+    height
+
+  );
+
+
+  /*
+   * JPEG品質
+   *
+   * 0.85くらいなら
+   * 十分な画質とサイズ
+   */
+
+  return canvas.toDataURL(
+    "image/jpeg",
+    0.85
+  );
 
 }
 
-catch(error) {
 
-console.error(error);
+/*
+ * Base64だけ取り出す
+ */
 
-status.innerHTML =
-"<b>カメラエラー</b><br>" +
-error.name +
-"<br>" +
-error.message;
-
-}
-
-}
-
-
-/* OCR */
-
-async function initializeOCR() {
-
-if (worker) {
-return;
-}
-
-status.textContent =
-"OCRエンジンを準備しています…";
-
-
-worker =
-await Tesseract
-.createWorker(
-
-"jpn+eng",
-
-1,
-
-{
-
-logger:
-function(info) {
-
-if (
-info.status &&
-info.progress
+function extractBase64(
+  dataUrl
 ) {
 
-status.textContent =
-"OCR：" +
-Math.round(
-info.progress * 100
-) +
-"%";
-
-}
-
-}
-
-}
-
-);
-
-
-await worker
-.setParameters({
-
-tessedit_pageseg_mode:
-"7"
-
-});
-
-
-status.textContent =
-"準備完了";
-
-}
-
-
-/* 撮影 */
-
-function captureFrame() {
-
-const canvas =
-document.getElementById(
-"captureCanvas"
-);
-
-canvas.width =
-video.videoWidth;
-
-canvas.height =
-video.videoHeight;
-
-
-const ctx =
-canvas.getContext("2d");
-
-ctx.drawImage(
-
-video,
-
-0,
-0,
-
-canvas.width,
-canvas.height
-
-);
-
-return canvas;
+  return dataUrl
+    .split(",")[1];
 
 }
 
 
 /*
- * カード部分を切り出す
- *
- * 今回は枠の位置を基準にする。
+ * Geminiへ送信
  */
 
-function extractCard(
-source
+async function identifyCard() {
+
+  try {
+
+    scanButton.disabled =
+      true;
+
+
+    status.textContent =
+      "カード画像を撮影しています…";
+
+
+    const image =
+      captureImage();
+
+
+    /*
+     * 結果画面に
+     * 撮影画像を表示
+     */
+
+    capturedImage.src =
+      image;
+
+
+    status.textContent =
+      "Geminiがカードを判定しています…";
+
+
+    const base64 =
+      extractBase64(
+        image
+      );
+
+
+    const response =
+      await fetch(
+
+        API_URL,
+
+        {
+
+          method: "POST",
+
+          headers: {
+
+            "Content-Type":
+              "text/plain;charset=utf-8"
+
+          },
+
+          body:
+            JSON.stringify({
+
+              image: base64
+
+            })
+
+        }
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    console.log(
+      "Apps Script:",
+      data
+    );
+
+
+    if (!data.success) {
+
+      throw new Error(
+        data.error ||
+        "カード判定に失敗しました"
+      );
+
+    }
+
+
+    lastResult =
+      data.result;
+
+
+    showResult(
+      data.result
+    );
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    errorElement.textContent =
+      "エラー：\n" +
+      error.message;
+
+    cardName.textContent =
+      "判定できませんでした";
+
+
+    result.style.display =
+      "block";
+
+
+  } finally {
+
+    scanButton.disabled =
+      false;
+
+  }
+
+}
+
+
+/*
+ * 結果表示
+ */
+
+function showResult(
+  data
 ) {
 
-const sw =
-source.width;
-
-const sh =
-source.height;
+  result.style.display =
+    "block";
 
 
-/*
- * 画面中央の
- * カード領域
- */
-
-const cardWidth =
-sw * 0.72;
-
-const cardHeight =
-cardWidth / 0.716;
+  errorElement.textContent =
+    "";
 
 
-const sx =
-(sw - cardWidth) / 2;
+  if (
+    !data ||
+    data.is_mtg_card === false
+  ) {
 
-const sy =
-(sh - cardHeight) / 2;
+    cardName.textContent =
+      "MTGカードを認識できませんでした";
 
+    cardInfo.innerHTML =
+      "別の角度から再スキャンしてください。";
 
-/*
- * 出力サイズ
- */
+    return;
 
-const outputWidth =
-1000;
-
-const outputHeight =
-Math.round(
-outputWidth / 0.716
-);
+  }
 
 
-const canvas =
-document.getElementById(
-"cardCanvas"
-);
-
-canvas.width =
-outputWidth;
-
-canvas.height =
-outputHeight;
+  cardName.textContent =
+    data.card_name ||
+    "カード名不明";
 
 
-const ctx =
-canvas.getContext("2d");
+  cardInfo.innerHTML = `
 
+    <b>セットコード：</b>
+    ${escapeHtml(
+      data.set_code || "-"
+    )}
 
-ctx.imageSmoothingEnabled =
-true;
+    <br>
 
-ctx.imageSmoothingQuality =
-"high";
+    <b>セット名：</b>
+    ${escapeHtml(
+      data.set_name || "-"
+    )}
 
+    <br>
 
-ctx.drawImage(
+    <b>コレクター番号：</b>
+    ${escapeHtml(
+      data.collector_number || "-"
+    )}
 
-source,
+    <br>
 
-sx,
-sy,
-cardWidth,
-cardHeight,
+    <b>言語：</b>
+    ${escapeHtml(
+      data.language || "-"
+    )}
 
-0,
-0,
+    <br>
 
-outputWidth,
-outputHeight
+    <b>信頼度：</b>
+    ${
+      data.confidence != null
+      ? Math.round(
+          data.confidence * 100
+        ) + "%"
+      : "-"
+    }
 
-);
-
-
-return canvas;
+  `;
 
 }
 
 
 /*
- * カード名部分を抽出
+ * HTMLエスケープ
  */
 
-function extractName(
-cardCanvas
+function escapeHtml(
+  value
 ) {
 
-const width =
-cardCanvas.width;
+  return String(value)
 
-const height =
-cardCanvas.height;
+    .replace(
+      /&/g,
+      "&amp;"
+    )
 
+    .replace(
+      /</g,
+      "&lt;"
+    )
 
-/*
- * MTGカード上部
- *
- * 少し広めに取る
- */
+    .replace(
+      />/g,
+      "&gt;"
+    )
 
-const x =
-width * 0.045;
+    .replace(
+      /"/g,
+      "&quot;"
+    )
 
-const y =
-height * 0.018;
-
-const w =
-width * 0.91;
-
-const h =
-height * 0.12;
-
-
-const canvas =
-document.getElementById(
-"nameCanvas"
-);
-
-
-/*
- * OCR用に4倍程度
- */
-
-canvas.width =
-Math.round(w * 2.5);
-
-canvas.height =
-Math.round(h * 2.5);
-
-
-const ctx =
-canvas.getContext("2d");
-
-ctx.imageSmoothingEnabled =
-true;
-
-ctx.imageSmoothingQuality =
-"high";
-
-
-ctx.drawImage(
-
-cardCanvas,
-
-x,
-y,
-w,
-h,
-
-0,
-0,
-
-canvas.width,
-canvas.height
-
-);
-
-
-return canvas;
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
-
-
-/*
- * 画像補正
- */
-
-function preprocess(
-source,
-mode
-) {
-
-const canvas =
-document.createElement(
-"canvas"
-);
-
-canvas.width =
-source.width;
-
-canvas.height =
-source.height;
-
-
-const ctx =
-canvas.getContext(
-"2d"
-);
-
-ctx.drawImage(
-source,
-0,
-0
-);
-
-
-const image =
-ctx.getImageData(
-
-0,
-0,
-
-canvas.width,
-canvas.height
-
-);
-
-const data =
-image.data;
-
-
-for (
-let i = 0;
-i < data.length;
-i += 4
-) {
-
-let r =
-data[i];
-
-let g =
-data[i + 1];
-
-let b =
-data[i + 2];
-
-
-/*
- * グレースケール
- */
-
-if (
-mode === "gray" ||
-mode === "binary"
-) {
-
-const gray =
-0.299 * r +
-0.587 * g +
-0.114 * b;
-
-r =
-gray;
-
-g =
-gray;
-
-b =
-gray;
-
-}
-
-
-/*
- * コントラスト強調
- */
-
-if (
-mode === "contrast" ||
-mode === "binary"
-) {
-
-const factor =
-1.8;
-
-r =
-(
-r - 128
-) *
-factor +
-128;
-
-g =
-(
-g - 128
-) *
-factor +
-128;
-
-b =
-(
-b - 128
-) *
-factor +
-128;
-
-}
-
-
-/*
- * 2値化
- */
-
-if (
-mode === "binary"
-) {
-
-const gray =
-(r + g + b) / 3;
-
-const value =
-gray > 150
-? 255
-: 0;
-
-r =
-value;
-
-g =
-value;
-
-b =
-value;
-
-}
-
-
-/*
- * 範囲制限
- */
-
-data[i] =
-Math.max(
-0,
-Math.min(
-255,
-r
-)
-);
-
-data[i + 1] =
-Math.max(
-0,
-Math.min(
-255,
-g
-)
-);
-
-data[i + 2] =
-Math.max(
-  0,
-  Math.min(
-    255,
-    b
-  )
-);
-
-}
-
-
-ctx.putImageData(
-image,
-0,
-0
-);
-
-
-return canvas;
-
-}
-
-
-/*
- * OCR
- */
-
-async function runOCR(
-canvas
-) {
-
-const result =
-await worker.recognize(
-canvas
-);
-
-return (
-result.data.text || ""
-)
-.replace(
-/[\r\n]+/g,
-" "
-)
-.replace(
-/\s+/g,
-" "
-)
-.trim();
-
-}
-
-
-/*
- * OCR複数パターン
- */
-
-async function recognizeCardName() {
-
-await initializeOCR();
-
-
-status.textContent =
-"カードを撮影しています…";
-
-
-const source =
-captureFrame();
-
-
-status.textContent =
-"カード画像を補正しています…";
-
-
-const card =
-extractCard(
-source
-);
-
-
-const name =
-extractName(
-card
-);
-
-
-/*
- * 3種類の画像でOCR
- */
-
-const normal =
-preprocess(
-name,
-"normal"
-);
-
-const gray =
-preprocess(
-name,
-"gray"
-);
-
-const contrast =
-preprocess(
-name,
-"contrast"
-);
-
-
-status.textContent =
-"カード名を3パターンで認識しています…";
-
-
-const results = [];
-
-
-results.push(
-await runOCR(
-normal
-)
-);
-
-results.push(
-await runOCR(
-gray
-)
-);
-
-results.push(
-await runOCR(
-contrast
-)
-);
-
-
-/*
- * 空文字を除外
- */
-
-const valid =
-results.filter(
-text =>
-text &&
-text.length > 0
-);
-
-
-/*
- * 重複除去
- */
-
-const unique =
-[
-...new Set(valid)
-];
-
-
-console.log(
-"OCR results:",
-unique
-);
-
-
-return unique;
-
-}
-
-
-/*
- * 読み取り
- */
-
-scanButton.addEventListener(
-"click",
-
-async function() {
-
-try {
-
-scanButton.disabled =
-true;
-
-
-const results =
-await recognizeCardName();
-
-
-result.style.display =
-"block";
-
-
-const ocrText =
-document.getElementById(
-"ocrText"
-);
-
-
-ocrText.textContent =
-results.length
-? results.join("\n")
-: "認識できませんでした";
-
-
-const cardName =
-document.getElementById(
-"cardName"
-);
-
-
-if (
-results.length
-) {
-
-cardName.textContent =
-"OCR候補";
-
-}
-
-else {
-
-cardName.textContent =
-"認識できません";
-
-}
-
-
-status.textContent =
-"認識結果を確認してください";
-
-}
-
-catch(error) {
-
-console.error(error);
-
-status.textContent =
-"OCRエラー：" +
-error.message;
-
-}
-
-finally {
-
-scanButton.disabled =
-false;
-
-}
-
-}
-);
 
 
 /*
@@ -1150,27 +807,71 @@ false;
  */
 
 retryButton.addEventListener(
-"click",
+  "click",
 
-function() {
+  function() {
 
-result.style.display =
-"none";
+    result.style.display =
+      "none";
 
-status.textContent =
-"カードを枠内に合わせてください";
+    lastResult =
+      null;
 
-}
+    status.textContent =
+      "カードを枠内に合わせてください";
+
+  }
+
 );
 
 
 /*
- * 起動
+ * 登録
+ *
+ * 今はまだSheetsには登録しない。
+ * 次の段階で実装する。
+ */
+
+registerButton.addEventListener(
+  "click",
+
+  function() {
+
+    if (!lastResult) {
+
+      return;
+
+    }
+
+
+    alert(
+      "カード認識成功！\n\n" +
+      (
+        lastResult.card_name ||
+        "カード名不明"
+      ) +
+      "\n\n" +
+      "次の段階でGoogle Sheetsへの登録を接続します。"
+    );
+
+  }
+
+);
+
+
+/*
+ * イベント
  */
 
 startButton.addEventListener(
-"click",
-startCamera
+  "click",
+  startCamera
+);
+
+
+scanButton.addEventListener(
+  "click",
+  identifyCard
 );
 
 </script>
