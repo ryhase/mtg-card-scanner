@@ -821,27 +821,100 @@ retryButton.addEventListener(
 registerButton.addEventListener(
   "click",
 
-  function() {
+  async function() {
 
     if (!lastResult) {
-
       return;
-
     }
 
 
-    alert(
-      "カード認識成功！\n\n" +
-      (
-        lastResult.card_name ||
-        "カード名不明"
-      ) +
-      "\n\n" +
-      "次の段階でGoogle Sheetsへの登録を接続します。"
-    );
+    try {
+
+      registerButton.disabled =
+        true;
+
+
+      registerButton.textContent =
+        "登録中…";
+
+
+      const response =
+        await fetch(
+          API_URL,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "text/plain;charset=utf-8"
+            },
+
+            body: JSON.stringify({
+
+              action:
+                "register",
+
+              card:
+                lastResult
+
+            })
+
+          }
+        );
+
+
+      const data =
+        await response.json();
+
+
+      if (!data.success) {
+
+        throw new Error(
+          data.error ||
+          "登録に失敗しました"
+        );
+
+      }
+
+
+      // カウンター更新
+      scanCount++;
+
+      counter.textContent =
+        "スキャン済み：" +
+        scanCount +
+        "枚";
+
+
+      // 結果画面を閉じる
+      result.style.display =
+        "none";
+
+
+      status.textContent =
+        "登録しました。次のカードをスキャンしてください";
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      errorElement.textContent =
+        "登録エラー：\n" +
+        error.message;
+
+
+    } finally {
+
+      registerButton.disabled =
+        false;
+
+      registerButton.textContent =
+        "✅ 登録";
+
+    }
 
   }
-
 );
 
 
