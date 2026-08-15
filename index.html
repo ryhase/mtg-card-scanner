@@ -351,9 +351,8 @@ const API_URL =
 
 
 let stream = null;
-
 let lastResult = null;
-
+let scanCount = 0;
 
 /* DOM */
 
@@ -402,6 +401,11 @@ const errorElement =
     "error"
   );
 
+const counter =
+  document.getElementById(
+    "counter"
+  );
+  
 const registerButton =
   document.getElementById(
     "registerButton"
