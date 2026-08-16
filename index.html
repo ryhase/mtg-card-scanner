@@ -347,15 +347,13 @@ button {
  * Google Apps Script Web App
  */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbyExwwdN_lxJGCAyOuIhzgviFiXYjaX0XbAurMuEwO0Zpvk_FHAv6Sr42Kpf_dHYapd/exec";
-
+  "https://script.google.com/macros/s/AKfycbxAV9S-v1dUQeHkPkIG6yNMaRjWEqJGIdX2f4_1Tz4B6hFHqOtSsJjF3KJhHf4oqdlt/exec";
 
 let stream = null;
 let lastResult = null;
 let scanCount = 0;
 
 /* DOM */
-
 const video =
   document.getElementById(
     "camera"
@@ -427,45 +425,32 @@ const canvas =
  */
 
 async function startCamera() {
-
   try {
-
     status.textContent =
       "カメラを起動しています…";
-
-
+    
     stream =
       await navigator
         .mediaDevices
         .getUserMedia({
-
           video: {
-
             facingMode: {
               ideal: "environment"
             },
-
             width: {
               ideal: 1920
             },
-
             height: {
               ideal: 1080
             }
-
           },
-
           audio: false
-
         });
-
 
     video.srcObject =
       stream;
 
-
     await video.play();
-
 
     startButton.style.display =
       "none";
@@ -473,27 +458,21 @@ async function startCamera() {
     scanButton.style.display =
       "block";
 
-
     status.textContent =
       "カードを枠内に合わせてください";
 
-
   } catch (error) {
-
     console.error(error);
-
+    
     status.textContent =
       "カメラエラー";
-
+    
     errorElement.textContent =
       error.name +
       "\n" +
       error.message;
-
   }
-
 }
-
 
 /*
  * カメラ画像をJPEG化
