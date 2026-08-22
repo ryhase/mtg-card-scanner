@@ -655,6 +655,14 @@ button {
         <!-- ステータス・デッキ選択 -->
         <div id="statusSection" class="info" style="display:none;">
           <div class="form-group">
+            <label for="foilSelect" class="form-label">仕様：</label>
+            <select id="foilSelect" class="form-select">
+              <option value="false" selected>通常版</option>
+              <option value="true">Foil</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label for="statusSelect" class="form-label">ステータス：</label>
             <select id="statusSelect" class="form-select">
               <option value="deck">デッキ</option>
@@ -844,6 +852,11 @@ const statusSection =
 const statusSelect =
   document.getElementById(
     "statusSelect"
+  );
+
+const foilSelect =
+  document.getElementById(
+    "foilSelect"
   );
 
 const deckGroup =
@@ -1241,6 +1254,8 @@ function showResult(
   statusSection.style.display =
     "block";
 
+  foilSelect.value = "false";
+
   onStatusChange();
 
   const jaName =
@@ -1427,7 +1442,8 @@ registerButton.addEventListener(
       const cardToRegister =
         Object.assign({}, lastResult, {
           status: selectedStatus,
-          deck_id: selectedDeckId
+          deck_id: selectedDeckId,
+          foil: foilSelect.value === "true"
         });
 
 
