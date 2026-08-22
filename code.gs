@@ -1,6 +1,6 @@
 const SHEET_CARDS = 'Cards';
 const SHEET_LOG = 'ScanLog';
-const SHEET_DECKS = 'deck_summary';
+const SHEET_DECKS = 'DeckSummary';
 
 /**
  * Webアプリを開いたときに表示する画面
