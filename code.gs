@@ -315,6 +315,7 @@ function registerCard(card) {
     status = 'storage';
   }
   const deckId = (status === 'deck') ? String(card.deck_id || '').trim() : '';
+  const registeredCardName = cleanJapaneseCardName(card.card_name);
 
 
   /*
@@ -338,7 +339,7 @@ function registerCard(card) {
   const targetCollectorNumber = String(card.collector_number || '').trim().toLowerCase();
   const targetLanguage = String(card.language || '').trim().toLowerCase();
   const targetFoil = String(card.foil || false).toLowerCase();
-  const targetCardName = String(card.card_name || '').trim().toLowerCase();
+  const targetCardName = String(registeredCardName || '').trim().toLowerCase();
   const targetCardEnglishName = String(card.card_english_name || '').trim().toLowerCase();
 
   for (
@@ -382,7 +383,7 @@ function registerCard(card) {
   const cardData = {
 
     card_name:
-      card.card_name || '',
+      registeredCardName,
 
     card_english_name:
       card.card_english_name || '',
@@ -590,7 +591,7 @@ function registerCard(card) {
 
     now,
 
-    card.card_name || '',
+    registeredCardName,
 
     card.card_english_name || '',
 
@@ -614,7 +615,7 @@ function registerCard(card) {
     success: true,
 
     message:
-      (card.card_name || card.card_english_name || 'カード') +
+      (registeredCardName || card.card_english_name || 'カード') +
       ' を登録しました'
 
   };
@@ -1442,6 +1443,27 @@ function cleanCardName(name) {
     return str.substring(0, slashIdx).trim();
   }
   return str;
+}
+
+/**
+ * 登録用の日本語カード名から丸括弧と注記を除去する。
+ * 半角・全角の括弧に対応し、英語名は変更しない。
+ */
+function cleanJapaneseCardName(name) {
+  const cardName = String(name || '').trim();
+
+  if (!/[\u3040-\u30ff\u3400-\u9fff]/.test(cardName)) {
+    return cardName;
+  }
+
+  let cleaned = cardName;
+  let previous;
+  do {
+    previous = cleaned;
+    cleaned = cleaned.replace(/\s*[\(（][^\(\)（）]*[\)）]\s*/g, ' ');
+  } while (cleaned !== previous);
+
+  return cleaned.replace(/\s+/g, ' ').trim();
 }
 
 /**
