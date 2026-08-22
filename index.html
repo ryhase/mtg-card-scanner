@@ -662,6 +662,11 @@ button {
             </select>
           </div>
 
+          <div id="printingGroup" class="form-group" style="display:none; margin-top: 14px;">
+            <label for="printingSelect" class="form-label">セット・番号：</label>
+            <select id="printingSelect" class="form-select"></select>
+          </div>
+
           <div class="form-group">
             <label for="statusSelect" class="form-label">ステータス：</label>
             <select id="statusSelect" class="form-select">
@@ -795,7 +800,7 @@ button {
  * Google Apps Script Web App
  */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbwrIQ3gPasDboGydZcDi65cnA5reeUesJ-QQnuqoO9q3aS7lkqn6DyIyIHfD6JaZVOy/exec";
+  "https://script.google.com/macros/s/AKfycbzzB_eJlGPbClad1TZlByNUfjQjSeDyF-rcmEGRSedODza7Di30J0-NOiNo5k17cPgP/exec";
 
 let stream = null;
 let lastResult = null;
@@ -857,6 +862,16 @@ const statusSelect =
 const foilSelect =
   document.getElementById(
     "foilSelect"
+  );
+
+const printingGroup =
+  document.getElementById(
+    "printingGroup"
+  );
+
+const printingSelect =
+  document.getElementById(
+    "printingSelect"
   );
 
 const deckGroup =
@@ -1209,6 +1224,36 @@ statusSelect.addEventListener(
   onStatusChange
 );
 
+function updatePrintingOptions(options, currentSetCode, currentCollectorNumber) {
+  printingSelect.innerHTML = "";
+
+  if (!Array.isArray(options) || options.length === 0) {
+    printingGroup.style.display = "none";
+    return;
+  }
+
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "読み取った内容のまま" +
+    (currentSetCode || currentCollectorNumber
+      ? " (" + (currentSetCode || "-") + " #" + (currentCollectorNumber || "-") + ")"
+      : "");
+  printingSelect.appendChild(defaultOption);
+
+  options.forEach(function(option) {
+    const printingOption = document.createElement("option");
+    printingOption.value = JSON.stringify({
+      set_code: option.set_code,
+      collector_number: option.collector_number
+    });
+    printingOption.textContent = option.set_code + " #" + option.collector_number +
+      (option.set_name ? " — " + option.set_name : "");
+    printingSelect.appendChild(printingOption);
+  });
+
+  printingGroup.style.display = "block";
+}
+
 
 /*
  * 結果表示
@@ -1255,6 +1300,12 @@ function showResult(
     "block";
 
   foilSelect.value = "false";
+
+  updatePrintingOptions(
+    data.printing_options,
+    data.set_code,
+    data.collector_number
+  );
 
   onStatusChange();
 
@@ -1445,6 +1496,15 @@ registerButton.addEventListener(
           deck_id: selectedDeckId,
           foil: foilSelect.value === "true"
         });
+
+      if (printingSelect.value) {
+        const selectedPrinting = JSON.parse(printingSelect.value);
+        cardToRegister.set_code = selectedPrinting.set_code;
+        cardToRegister.collector_number = selectedPrinting.collector_number;
+      }
+
+      delete cardToRegister.printing_options;
+      delete cardToRegister.oracle_id;
 
 
       const response =
