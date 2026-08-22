@@ -378,6 +378,10 @@ function registerCard(card) {
   }
   const deckId = (status === 'deck') ? String(card.deck_id || '').trim() : '';
   const registeredCardName = cleanJapaneseCardName(card.card_name);
+  const requestedCount = Number(card.count);
+  const registrationCount = Number.isInteger(requestedCount) && requestedCount > 0
+    ? requestedCount
+    : 1;
 
 
   /*
@@ -506,10 +510,10 @@ function registerCard(card) {
 
 
     /*
-     * 枚数 +1
+     * 指定枚数を加算
      */
     countCell.setValue(
-      currentCount + 1
+      currentCount + registrationCount
     );
 
 
@@ -630,7 +634,7 @@ function registerCard(card) {
         newRow,
         columns['count']
       )
-      .setValue(1);
+      .setValue(registrationCount);
 
 
     /*
