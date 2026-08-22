@@ -253,6 +253,37 @@ button {
   white-space: pre-wrap;
 }
 
+.form-group {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #ddd;
+}
+
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #1a1a1a;
+  color: white;
+  font-size: 16px;
+  outline: none;
+  cursor: pointer;
+  appearance: auto;
+  box-sizing: border-box;
+}
+
+.form-select:focus {
+  border-color: #3b82f6;
+}
+
 </style>
 
 </head>
@@ -312,6 +343,29 @@ button {
         class="info">
       </div>
 
+      <!-- ステータス・デッキ選択 -->
+      <div id="statusSection" class="info" style="display:none;">
+        <div class="form-group">
+          <label for="statusSelect" class="form-label">ステータス：</label>
+          <select id="statusSelect" class="form-select">
+            <option value="deck">デッキ</option>
+            <option value="case">ケース</option>
+            <option value="storage" selected>ストレージ</option>
+            <option value="selling">販売中</option>
+          </select>
+        </div>
+
+        <div id="deckGroup" class="form-group" style="display:none; margin-top: 14px;">
+          <label for="deckSelect" class="form-label">デッキ選択：</label>
+          <select id="deckSelect" class="form-select">
+            <option value="">(デッキを選択してください)</option>
+          </select>
+          <div id="deckWarning" style="display:none; color:#ffb84d; font-size:12px; margin-top:6px;">
+            ※deck_summaryシートにデッキが登録されていません
+          </div>
+        </div>
+      </div>
+
       <div
         id="error">
       </div>
@@ -352,6 +406,8 @@ const API_URL =
 let stream = null;
 let lastResult = null;
 let scanCount = 0;
+let deckList = [];
+let isDeckListLoaded = false;
 
 /* DOM */
 const video =
@@ -392,6 +448,31 @@ const cardName =
 const cardInfo =
   document.getElementById(
     "cardInfo"
+  );
+
+const statusSection =
+  document.getElementById(
+    "statusSection"
+  );
+
+const statusSelect =
+  document.getElementById(
+    "statusSelect"
+  );
+
+const deckGroup =
+  document.getElementById(
+    "deckGroup"
+  );
+
+const deckSelect =
+  document.getElementById(
+    "deckSelect"
+  );
+
+const deckWarning =
+  document.getElementById(
+    "deckWarning"
   );
 
 const errorElement =
@@ -653,6 +734,84 @@ async function identifyCard() {
 
 
 /*
+ * deck_summaryシートからデッキ一覧を取得
+ */
+async function loadDecks() {
+  try {
+    const response = await fetch(
+      API_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          action: "getDecks"
+        })
+      }
+    );
+
+    if (!response.ok) {
+      return;
+    }
+
+    const data = await response.json();
+
+    if (data.success && Array.isArray(data.decks)) {
+      deckList = data.decks;
+      isDeckListLoaded = true;
+      updateDeckSelectOptions();
+    }
+  } catch (err) {
+    console.error("デッキ一覧の取得に失敗しました:", err);
+  }
+}
+
+function updateDeckSelectOptions() {
+  deckSelect.innerHTML = "";
+
+  if (deckList.length === 0) {
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "登録されているデッキがありません";
+    deckSelect.appendChild(defaultOption);
+    deckWarning.style.display = "block";
+    return;
+  }
+
+  deckWarning.style.display = "none";
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "(デッキを選択)";
+  deckSelect.appendChild(defaultOption);
+
+  deckList.forEach(function(deck) {
+    const option = document.createElement("option");
+    option.value = deck.deck_id;
+    option.textContent = deck.deck_name;
+    deckSelect.appendChild(option);
+  });
+}
+
+function onStatusChange() {
+  if (statusSelect.value === "deck") {
+    deckGroup.style.display = "block";
+    if (!isDeckListLoaded) {
+      loadDecks();
+    }
+  } else {
+    deckGroup.style.display = "none";
+  }
+}
+
+statusSelect.addEventListener(
+  "change",
+  onStatusChange
+);
+
+
+/*
  * 結果表示
  */
 
@@ -679,9 +838,24 @@ function showResult(
     cardInfo.innerHTML =
       "別の角度から再スキャンしてください。";
 
+    statusSection.style.display =
+      "none";
+
+    registerButton.style.display =
+      "none";
+
     return;
 
   }
+
+
+  registerButton.style.display =
+    "block";
+
+  statusSection.style.display =
+    "block";
+
+  onStatusChange();
 
 
   cardName.textContent =
@@ -783,6 +957,9 @@ retryButton.addEventListener(
     result.style.display =
       "none";
 
+    statusSection.style.display =
+      "none";
+
     lastResult =
       null;
 
@@ -796,9 +973,6 @@ retryButton.addEventListener(
 
 /*
  * 登録
- *
- * 今はまだSheetsには登録しない。
- * 次の段階で実装する。
  */
 
 registerButton.addEventListener(
@@ -810,6 +984,22 @@ registerButton.addEventListener(
       return;
     }
 
+    const selectedStatus =
+      statusSelect.value;
+
+    let selectedDeckId =
+      "";
+
+    if (selectedStatus === "deck") {
+      selectedDeckId =
+        deckSelect.value;
+
+      if (!selectedDeckId && deckList.length > 0) {
+        alert("デッキを選択してください。");
+        return;
+      }
+    }
+
 
     try {
 
@@ -819,6 +1009,13 @@ registerButton.addEventListener(
 
       registerButton.textContent =
         "登録中…";
+
+
+      const cardToRegister =
+        Object.assign({}, lastResult, {
+          status: selectedStatus,
+          deck_id: selectedDeckId
+        });
 
 
       const response =
@@ -838,7 +1035,7 @@ registerButton.addEventListener(
                 "register",
 
               card:
-                lastResult
+                cardToRegister
 
             })
 
@@ -871,6 +1068,9 @@ registerButton.addEventListener(
 
       // 結果画面を閉じる
       result.style.display =
+        "none";
+
+      statusSection.style.display =
         "none";
 
 
@@ -915,6 +1115,9 @@ scanButton.addEventListener(
   "click",
   identifyCard
 );
+
+// 初期読み込み時にデッキ一覧を取得
+loadDecks();
 
 </script>
 
