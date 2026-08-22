@@ -208,6 +208,68 @@ function searchScryfallCard(cardName) {
 }
 
 /**
+ * 同一カードの全印刷から、セットコードとコレクター番号の候補を取得する。
+ * oracle_id がある場合はそれを使い、ない場合だけ英語名の完全一致で検索する。
+ */
+function getScryfallPrintingOptions(oracleId, englishName) {
+  let query = '';
+
+  if (oracleId) {
+    query = 'oracleid:' + String(oracleId).trim();
+  } else if (englishName) {
+    query = '!"' + String(englishName).replace(/"/g, '\\"') + '"';
+  } else {
+    return [];
+  }
+
+  let url =
+    'https://api.scryfall.com/cards/search?q=' +
+    encodeURIComponent(query) +
+    '&unique=prints';
+  const optionsByKey = {};
+
+  while (url) {
+    const response = UrlFetchApp.fetch(url, {
+      method: 'get',
+      headers: {
+        'User-Agent': 'MTG-Card-Scanner/1.0 contact: mtg-card-scanner',
+        'Accept': 'application/json;q=0.9,*/*;q=0.8'
+      },
+      muteHttpExceptions: true
+    });
+
+    if (response.getResponseCode() !== 200) {
+      throw new Error('Scryfall印刷候補の取得に失敗しました: HTTP ' + response.getResponseCode());
+    }
+
+    const data = JSON.parse(response.getContentText());
+    (data.data || []).forEach(function(printing) {
+      const setCode = String(printing.set || '').trim();
+      const collectorNumber = String(printing.collector_number || '').trim();
+      const key = setCode.toLowerCase() + '|' + collectorNumber.toLowerCase();
+
+      if (setCode && collectorNumber && !optionsByKey[key]) {
+        optionsByKey[key] = {
+          set_code: setCode,
+          collector_number: collectorNumber,
+          set_name: printing.set_name || ''
+        };
+      }
+    });
+
+    url = data.has_more && data.next_page ? data.next_page : '';
+  }
+
+  return Object.keys(optionsByKey).map(function(key) {
+    return optionsByKey[key];
+  }).sort(function(a, b) {
+    const aKey = a.set_code.toLowerCase() + '|' + a.collector_number;
+    const bKey = b.set_code.toLowerCase() + '|' + b.collector_number;
+    return aKey < bKey ? -1 : (aKey > bKey ? 1 : 0);
+  });
+}
+
+/**
  * Cardsシートのヘッダーから列番号を取得
  */
 function getColumnMap(sheet) {
@@ -1076,6 +1138,16 @@ console.log(
   )
 );
 
+let printingOptions = [];
+try {
+  printingOptions = getScryfallPrintingOptions(
+    scryfallCard.oracle_id,
+    scryfallCard.card_english_name
+  );
+} catch (error) {
+  console.warn('Scryfall印刷候補の取得に失敗:', error.message);
+}
+
 
 /*
  * Geminiの情報と
@@ -1108,6 +1180,9 @@ return {
 
   mana_value:
     scryfallCard.mana_value,
+
+  printing_options:
+    printingOptions,
 
   confidence:
     result.confidence
@@ -1716,6 +1791,9 @@ function convertScryfallCard(card) {
 
     foil:
       false,
+
+    oracle_id:
+      card.oracle_id || '',
 
     color:
       color,
