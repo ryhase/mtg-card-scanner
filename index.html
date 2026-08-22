@@ -662,6 +662,36 @@ button {
             </select>
           </div>
 
+          <div class="form-group" style="margin-top: 14px;">
+            <label for="languageInput" class="form-label">言語：</label>
+            <input id="languageInput" class="form-input" list="languageOptions" placeholder="例: ja または en">
+            <datalist id="languageOptions">
+              <option value="ja">日本語 (ja)</option>
+              <option value="en">英語 (en)</option>
+              <option value="es">スペイン語 (es)</option>
+              <option value="fr">フランス語 (fr)</option>
+              <option value="de">ドイツ語 (de)</option>
+              <option value="it">イタリア語 (it)</option>
+              <option value="pt">ポルトガル語 (pt)</option>
+              <option value="ko">韓国語 (ko)</option>
+              <option value="ru">ロシア語 (ru)</option>
+              <option value="zhs">簡体字中国語 (zhs)</option>
+              <option value="zht">繁体字中国語 (zht)</option>
+              <option value="he">ヘブライ語 (he)</option>
+              <option value="la">ラテン語 (la)</option>
+              <option value="grc">古代ギリシャ語 (grc)</option>
+              <option value="ar">アラビア語 (ar)</option>
+              <option value="sa">サンスクリット語 (sa)</option>
+              <option value="ph">ファイレクシア語 (ph)</option>
+              <option value="qya">クウェニヤ語 (qya)</option>
+            </datalist>
+          </div>
+
+          <div class="form-group" style="margin-top: 14px;">
+            <label for="countInput" class="form-label">枚数：</label>
+            <input id="countInput" class="form-input" type="number" min="1" step="1" value="1" inputmode="numeric">
+          </div>
+
           <div id="printingGroup" class="form-group" style="display:none; margin-top: 14px;">
             <label for="printingSelect" class="form-label">セット・番号：</label>
             <select id="printingSelect" class="form-select"></select>
@@ -800,7 +830,7 @@ button {
  * Google Apps Script Web App
  */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbzzB_eJlGPbClad1TZlByNUfjQjSeDyF-rcmEGRSedODza7Di30J0-NOiNo5k17cPgP/exec";
+  "https://script.google.com/macros/s/AKfycbxfQjJffFoC4FAwB0NpJqc-V5VCr4mADV4CZ8KjdMYUdd6vTtysGeLTu0WVH4o1Hpk/exec";
 
 let stream = null;
 let lastResult = null;
@@ -862,6 +892,16 @@ const statusSelect =
 const foilSelect =
   document.getElementById(
     "foilSelect"
+  );
+
+const languageInput =
+  document.getElementById(
+    "languageInput"
+  );
+
+const countInput =
+  document.getElementById(
+    "countInput"
   );
 
 const printingGroup =
@@ -1300,6 +1340,8 @@ function showResult(
     "block";
 
   foilSelect.value = "false";
+  languageInput.value = data.language || "";
+  countInput.value = "1";
 
   updatePrintingOptions(
     data.printing_options,
@@ -1479,6 +1521,13 @@ registerButton.addEventListener(
       }
     }
 
+    const selectedCount = Number(countInput.value);
+    if (!Number.isInteger(selectedCount) || selectedCount < 1) {
+      alert("枚数は1以上の整数で入力してください。");
+      countInput.focus();
+      return;
+    }
+
 
     try {
 
@@ -1494,7 +1543,9 @@ registerButton.addEventListener(
         Object.assign({}, lastResult, {
           status: selectedStatus,
           deck_id: selectedDeckId,
-          foil: foilSelect.value === "true"
+          foil: foilSelect.value === "true",
+          language: languageInput.value.trim().toLowerCase() || lastResult.language || "",
+          count: selectedCount
         });
 
       if (printingSelect.value) {
