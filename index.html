@@ -284,6 +284,308 @@ button {
   border-color: #3b82f6;
 }
 
+/* Navigation */
+#appNav {
+  display: flex;
+  background: #1c1c1c;
+  border-bottom: 1px solid #333;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-btn {
+  flex: 1;
+  padding: 14px 10px;
+  background: transparent;
+  color: #888;
+  font-size: 15px;
+  font-weight: bold;
+  border: none;
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-btn.active {
+  color: white;
+  border-bottom-color: #3b82f6;
+  background: #252525;
+}
+
+/* Forms */
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: #1a1a1a;
+  color: white;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: #3b82f6;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* Color Badges */
+.color-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.color-btn {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #444;
+  background: #222;
+  color: #aaa;
+  font-size: 13px;
+  font-weight: normal;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.color-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  font-weight: bold;
+}
+
+/* Price Range */
+.price-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.price-range .form-input {
+  flex: 1;
+}
+
+.range-sep {
+  color: #888;
+  font-size: 14px;
+}
+
+/* Action Buttons */
+.search-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-primary {
+  flex: 2;
+  padding: 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 12px;
+  background: #333;
+  color: #ccc;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #444;
+}
+
+/* Search View Container */
+#searchView {
+  width: 100%;
+  min-height: calc(100vh - 106px);
+  background: #111;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.search-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.search-panel {
+  background: #1e1e1e;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #2a2a2a;
+}
+
+.search-summary {
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+/* Results List */
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-item {
+  background: #1e1e1e;
+  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid #333;
+  transition: border-color 0.2s;
+}
+
+.card-item:hover {
+  border-color: #555;
+}
+
+.card-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.card-item-title-wrap {
+  flex: 1;
+}
+
+.card-item-name {
+  display: block;
+  font-size: 17px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.card-item-en-name {
+  display: block;
+  font-size: 13px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.card-count-badge {
+  background: #2563eb;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.meta-tag {
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: #2a2a2a;
+  color: #ccc;
+}
+
+.meta-tag.type-tag {
+  background: #333;
+  color: #eee;
+}
+
+.meta-tag.color-tag {
+  background: #1e3a5f;
+  color: #93c5fd;
+}
+
+.meta-tag.mana-tag {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+.meta-tag.foil-tag {
+  background: linear-gradient(135deg, #f59e0b, #ec4899);
+  color: white;
+  font-weight: bold;
+}
+
+.meta-tag.status-tag {
+  background: #065f46;
+  color: #6ee7b7;
+}
+
+.card-sub-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  color: #aaa;
+  border-top: 1px solid #2a2a2a;
+  padding-top: 8px;
+}
+
+.card-price {
+  color: #34d399;
+  font-size: 14px;
+}
+
+.card-price b {
+  color: #10b981;
+}
+
+.card-price-none {
+  color: #666;
+  font-size: 12px;
+}
+
+.empty-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: #777;
+  font-size: 15px;
+}
+
+.loading-box {
+  text-align: center;
+  padding: 30px;
+  color: #3b82f6;
+  font-size: 15px;
+}
+
 </style>
 
 </head>
@@ -291,103 +593,187 @@ button {
 <body>
 
 <header>
-  MTG Card Scanner
+  MTG Card Scanner & Search
 </header>
 
-<div id="scanner">
+<nav id="appNav">
+  <button id="navScan" class="nav-btn active" type="button">📷 スキャナー</button>
+  <button id="navSearch" class="nav-btn" type="button">🔍 カード検索</button>
+</nav>
 
-  <video
-    id="camera"
-    autoplay
-    playsinline>
-  </video>
+<!-- スキャナー画面 -->
+<div id="scannerView">
+  <div id="scanner">
 
-  <div id="cardFrame"></div>
+    <video
+      id="camera"
+      autoplay
+      playsinline>
+    </video>
 
-  <div id="status">
-    「カメラを起動」を押してください
-  </div>
+    <div id="cardFrame"></div>
 
-  <button
-    id="startButton">
-    📷 カメラを起動
-  </button>
+    <div id="status">
+      「カメラを起動」を押してください
+    </div>
 
-  <button
-    id="scanButton"
-    style="display:none">
-    🤖 Geminiでカード判定
-  </button>
+    <button
+      id="startButton">
+      📷 カメラを起動
+    </button>
 
-  <div id="counter">
-    スキャン済み：0枚
-  </div>
+    <button
+      id="scanButton"
+      style="display:none">
+      🤖 Geminiでカード判定
+    </button>
+
+    <div id="counter">
+      スキャン済み：0枚
+    </div>
 
 
-  <!-- 結果 -->
+    <!-- 結果 -->
 
-  <div id="result">
+    <div id="result">
 
-    <div id="resultCard">
+      <div id="resultCard">
 
-      <img
-        id="capturedImage"
-        alt="撮影したカード">
+        <img
+          id="capturedImage"
+          alt="撮影したカード">
 
-      <div id="cardName">
-        判定中…
-      </div>
-
-      <div
-        id="cardInfo"
-        class="info">
-      </div>
-
-      <!-- ステータス・デッキ選択 -->
-      <div id="statusSection" class="info" style="display:none;">
-        <div class="form-group">
-          <label for="statusSelect" class="form-label">ステータス：</label>
-          <select id="statusSelect" class="form-select">
-            <option value="deck">デッキ</option>
-            <option value="case">ケース</option>
-            <option value="storage" selected>ストレージ</option>
-            <option value="selling">販売中</option>
-          </select>
+        <div id="cardName">
+          判定中…
         </div>
 
-        <div id="deckGroup" class="form-group" style="display:none; margin-top: 14px;">
-          <label for="deckSelect" class="form-label">デッキ選択：</label>
-          <select id="deckSelect" class="form-select">
-            <option value="">(デッキを選択してください)</option>
-          </select>
-          <div id="deckWarning" style="display:none; color:#ffb84d; font-size:12px; margin-top:6px;">
-            ※deck_summaryシートにデッキが登録されていません
+        <div
+          id="cardInfo"
+          class="info">
+        </div>
+
+        <!-- ステータス・デッキ選択 -->
+        <div id="statusSection" class="info" style="display:none;">
+          <div class="form-group">
+            <label for="statusSelect" class="form-label">ステータス：</label>
+            <select id="statusSelect" class="form-select">
+              <option value="deck">デッキ</option>
+              <option value="case">ケース</option>
+              <option value="storage" selected>ストレージ</option>
+              <option value="selling">販売中</option>
+            </select>
+          </div>
+
+          <div id="deckGroup" class="form-group" style="display:none; margin-top: 14px;">
+            <label for="deckSelect" class="form-label">デッキ選択：</label>
+            <select id="deckSelect" class="form-select">
+              <option value="">(デッキを選択してください)</option>
+            </select>
+            <div id="deckWarning" style="display:none; color:#ffb84d; font-size:12px; margin-top:6px;">
+              ※DeckSummaryシートにデッキが登録されていません
+            </div>
           </div>
         </div>
+
+        <div
+          id="error">
+        </div>
+
+        <button
+          id="registerButton"
+          class="action">
+          ✅ 登録
+        </button>
+
+        <button
+          id="retryButton"
+          class="action">
+          🔄 再スキャン
+        </button>
+
       </div>
-
-      <div
-        id="error">
-      </div>
-
-      <button
-        id="registerButton"
-        class="action">
-        ✅ 登録
-      </button>
-
-      <button
-        id="retryButton"
-        class="action">
-        🔄 再スキャン
-      </button>
 
     </div>
 
   </div>
-
 </div>
 
+<!-- 検索画面 -->
+<div id="searchView" style="display:none;">
+  <div class="search-container">
+    <div class="search-panel">
+      <!-- カード名 -->
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label" for="searchQuery">カード名：</label>
+        <input type="text" id="searchQuery" class="form-input" placeholder="日本語名または英語名（部分一致）">
+      </div>
+
+      <!-- 色フィルター -->
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label">色：</label>
+        <div class="color-badges" id="searchColorBadges">
+          <button type="button" class="color-btn" data-color="白">⚪ 白</button>
+          <button type="button" class="color-btn" data-color="青">🔵 青</button>
+          <button type="button" class="color-btn" data-color="黒">⚫ 黒</button>
+          <button type="button" class="color-btn" data-color="赤">🔴 赤</button>
+          <button type="button" class="color-btn" data-color="緑">🟢 緑</button>
+          <button type="button" class="color-btn" data-color="無色">🔘 無色</button>
+        </div>
+      </div>
+
+      <!-- マナコスト & ステータス -->
+      <div class="form-row" style="margin-bottom: 12px;">
+        <div class="form-group flex-1">
+          <label class="form-label" for="searchMana">マナコスト：</label>
+          <select id="searchMana" class="form-select">
+            <option value="">指定なし</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7+">7+</option>
+          </select>
+        </div>
+
+        <div class="form-group flex-1">
+          <label class="form-label" for="searchStatus">ステータス：</label>
+          <select id="searchStatus" class="form-select">
+            <option value="all">すべて</option>
+            <option value="deck">デッキ</option>
+            <option value="case">ケース</option>
+            <option value="storage">ストレージ</option>
+            <option value="selling">販売中</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 直近最低価格レンジ -->
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label class="form-label">直近最低価格レンジ (円)：</label>
+        <div class="price-range">
+          <input type="number" id="searchPriceMin" class="form-input" placeholder="下限 (例: 100)" min="0" step="50">
+          <span class="range-sep">〜</span>
+          <input type="number" id="searchPriceMax" class="form-input" placeholder="上限 (例: 5000)" min="0" step="50">
+        </div>
+      </div>
+
+      <!-- ボタン -->
+      <div class="search-btn-row">
+        <button id="btnDoSearch" class="btn-primary" type="button">🔍 検索する</button>
+        <button id="btnResetSearch" class="btn-secondary" type="button">クリア</button>
+      </div>
+    </div>
+
+    <!-- 検索結果サマリー & 一覧 -->
+    <div id="searchResultsSection">
+      <div id="searchSummary" class="search-summary" style="display:none;"></div>
+      <div id="searchResultsList" class="results-list"></div>
+    </div>
+  </div>
+</div>
 
 <canvas
   id="canvas"
@@ -401,7 +787,7 @@ button {
  * Google Apps Script Web App
  */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbyRR7YLNyXGxBNKAHydlQ3vGlFX_R-zATCZ7I_LaYVIAGJcbaPWTJ-3vjtYE6p4vTVW/exec";
+  "https://script.google.com/macros/s/AKfycbyI6tPhzoYI66AQRdLIB9ra9hp_ywBvTrypf852U0xFE4AK3bgvu0Xq8Uc5r5O0JZGO/exec";
 
 let stream = null;
 let lastResult = null;
@@ -734,7 +1120,7 @@ async function identifyCard() {
 
 
 /*
- * deck_summaryシートからデッキ一覧を取得
+ * DeckSummaryシートからデッキ一覧を取得
  */
 async function loadDecks() {
   try {
@@ -857,13 +1243,40 @@ function showResult(
 
   onStatusChange();
 
+  const jaName =
+    data.card_name || "";
 
-  cardName.textContent =
-    data.card_name ||
-    "カード名不明";
+  const enName =
+    data.card_english_name || "";
+
+  if (jaName && enName && jaName !== enName) {
+    cardName.innerHTML = `
+      ${escapeHtml(jaName)}
+      <div style="font-size: 16px; font-weight: normal; color: #aaa; margin-top: 4px;">
+        ${escapeHtml(enName)}
+      </div>
+    `;
+  } else {
+    cardName.textContent =
+      jaName || enName || "カード名不明";
+  }
 
 
   cardInfo.innerHTML = `
+
+    <b>日本語名：</b>
+    ${escapeHtml(
+      jaName || "-"
+    )}
+
+    <br>
+
+    <b>英語名：</b>
+    ${escapeHtml(
+      enName || "-"
+    )}
+
+    <br>
 
     <b>セットコード：</b>
     ${escapeHtml(
@@ -1115,6 +1528,224 @@ scanButton.addEventListener(
   "click",
   identifyCard
 );
+
+
+/*
+ * 検索機能・タブ切り替え
+ */
+
+const navScan =
+  document.getElementById("navScan");
+
+const navSearch =
+  document.getElementById("navSearch");
+
+const scannerView =
+  document.getElementById("scannerView");
+
+const searchView =
+  document.getElementById("searchView");
+
+const searchQuery =
+  document.getElementById("searchQuery");
+
+const searchColorBadges =
+  document.getElementById("searchColorBadges");
+
+const searchMana =
+  document.getElementById("searchMana");
+
+const searchStatus =
+  document.getElementById("searchStatus");
+
+const searchPriceMin =
+  document.getElementById("searchPriceMin");
+
+const searchPriceMax =
+  document.getElementById("searchPriceMax");
+
+const btnDoSearch =
+  document.getElementById("btnDoSearch");
+
+const btnResetSearch =
+  document.getElementById("btnResetSearch");
+
+const searchSummary =
+  document.getElementById("searchSummary");
+
+const searchResultsList =
+  document.getElementById("searchResultsList");
+
+// タブ切り替え
+navScan.addEventListener("click", function() {
+  navScan.classList.add("active");
+  navSearch.classList.remove("active");
+  scannerView.style.display = "block";
+  searchView.style.display = "none";
+});
+
+navSearch.addEventListener("click", function() {
+  navSearch.classList.add("active");
+  navScan.classList.remove("active");
+  scannerView.style.display = "none";
+  searchView.style.display = "block";
+  // 初回表示時に検索欄が空ならプレビュー検索（全件検索など）
+  if (searchResultsList.children.length === 0) {
+    performSearch();
+  }
+});
+
+// 色選択ボタンのトグル
+const selectedColors = new Set();
+searchColorBadges.querySelectorAll(".color-btn").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    const color = btn.getAttribute("data-color");
+    if (selectedColors.has(color)) {
+      selectedColors.delete(color);
+      btn.classList.remove("active");
+    } else {
+      selectedColors.add(color);
+      btn.classList.add("active");
+    }
+  });
+});
+
+// ステータス表示テキスト
+function statusLabel(status) {
+  const map = {
+    deck: "デッキ",
+    case: "ケース",
+    storage: "ストレージ",
+    selling: "販売中"
+  };
+  return map[status] || status || "未設定";
+}
+
+// 検索実行
+async function performSearch() {
+  try {
+    btnDoSearch.disabled = true;
+    btnDoSearch.textContent = "検索中…";
+    searchSummary.style.display = "none";
+    searchResultsList.innerHTML = '<div class="loading-box">🔄 カードを検索しています…</div>';
+
+    const criteria = {
+      query: searchQuery.value.trim(),
+      colors: Array.from(selectedColors),
+      manaValue: searchMana.value,
+      status: searchStatus.value,
+      minPriceMin: searchPriceMin.value ? Number(searchPriceMin.value) : "",
+      minPriceMax: searchPriceMax.value ? Number(searchPriceMax.value) : ""
+    };
+
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        action: "searchCards",
+        criteria: criteria
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("HTTPエラー: " + response.status);
+    }
+
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || "検索に失敗しました");
+    }
+
+    renderSearchResults(data.cards || []);
+
+  } catch (err) {
+    console.error(err);
+    searchResultsList.innerHTML = `<div class="empty-results" style="color:#ff7777;">検索エラー: ${escapeHtml(err.message)}</div>`;
+  } finally {
+    btnDoSearch.disabled = false;
+    btnDoSearch.textContent = "🔍 検索する";
+  }
+}
+
+// 検索結果の描画
+function renderSearchResults(cards) {
+  if (!cards || cards.length === 0) {
+    searchSummary.style.display = "block";
+    searchSummary.textContent = "該当するカードは見つかりませんでした。";
+    searchResultsList.innerHTML = '<div class="empty-results">条件に一致するカードがありません。</div>';
+    return;
+  }
+
+  searchSummary.style.display = "block";
+  searchSummary.textContent = `検索結果：${cards.length} 件`;
+
+  let html = "";
+  cards.forEach(function(card) {
+    const jaName = card.card_name || "";
+    const enName = card.card_english_name || "";
+    const count = card.count || 1;
+    const minPrice = card.min_price;
+    const avgPrice = card.avg_price;
+    const status = card.status || "storage";
+    const deckName = card.deck_name || "";
+
+    html += `
+      <div class="card-item">
+        <div class="card-item-header">
+          <div class="card-item-title-wrap">
+            <span class="card-item-name">${escapeHtml(jaName || enName || '名称不明')}</span>
+            ${enName && enName !== jaName ? `<span class="card-item-en-name">${escapeHtml(enName)}</span>` : ''}
+          </div>
+          <span class="card-count-badge">${count}枚</span>
+        </div>
+        <div class="card-item-body">
+          <div class="card-meta">
+            ${card.type ? `<span class="meta-tag type-tag">${escapeHtml(card.type)}</span>` : ''}
+            ${card.color ? `<span class="meta-tag color-tag">${escapeHtml(card.color)}</span>` : ''}
+            ${card.mana_value !== '' && card.mana_value !== null && card.mana_value !== undefined ? `<span class="meta-tag mana-tag">マナ: ${escapeHtml(card.mana_value)}</span>` : ''}
+            ${card.foil ? `<span class="meta-tag foil-tag">Foil</span>` : ''}
+            <span class="meta-tag status-tag">状態: ${statusLabel(status)}${status === 'deck' && deckName ? ` (${escapeHtml(deckName)})` : ''}</span>
+          </div>
+          <div class="card-sub-info">
+            <span>セット: <b>${escapeHtml(card.set_code || '-')} #${escapeHtml(card.collector_number || '-')}</b> (${escapeHtml(card.language || '-')})</span>
+            ${minPrice !== null && minPrice !== undefined
+              ? `<span class="card-price">最安: <b>¥${Number(minPrice).toLocaleString()}</b> ${avgPrice !== null && avgPrice !== undefined ? `(平均 ¥${Number(avgPrice).toLocaleString()})` : ''}</span>`
+              : '<span class="card-price-none">価格未取得</span>'
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  searchResultsList.innerHTML = html;
+}
+
+// フォームリセット
+function resetSearchForm() {
+  searchQuery.value = "";
+  selectedColors.clear();
+  searchColorBadges.querySelectorAll(".color-btn").forEach(function(btn) {
+    btn.classList.remove("active");
+  });
+  searchMana.value = "";
+  searchStatus.value = "all";
+  searchPriceMin.value = "";
+  searchPriceMax.value = "";
+  searchSummary.style.display = "none";
+  searchResultsList.innerHTML = "";
+}
+
+btnDoSearch.addEventListener("click", performSearch);
+btnResetSearch.addEventListener("click", resetSearchForm);
+
+searchQuery.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    performSearch();
+  }
+});
 
 // 初期読み込み時にデッキ一覧を取得
 loadDecks();

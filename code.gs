@@ -13,6 +13,21 @@ function doGet(e) {
     });
   }
 
+  if (e && e.parameter && e.parameter.action === 'searchCards') {
+    const criteria = {
+      query: e.parameter.query || '',
+      colors: e.parameter.colors ? e.parameter.colors.split(',') : [],
+      manaValue: e.parameter.manaValue || '',
+      minPriceMin: e.parameter.minPriceMin || '',
+      minPriceMax: e.parameter.minPriceMax || '',
+      status: e.parameter.status || ''
+    };
+    return jsonResponse({
+      success: true,
+      cards: typeof searchCards === 'function' ? searchCards(criteria) : []
+    });
+  }
+
   return HtmlService
     .createHtmlOutputFromFile('Index')
     .setTitle('MTG Card Scanner')
@@ -34,8 +49,8 @@ function setupSheets() {
 
   if (cards.getLastRow() === 0) {
     cards.appendRow([
-      'scryfall_id',
       'card_name',
+      'card_english_name',
       'color',
       'type',
       'mana_value',
@@ -46,7 +61,6 @@ function setupSheets() {
       'status',
       'deck_id',
       'count',
-      'image_url',
       'updated_at'
     ]);
   }
@@ -62,18 +76,18 @@ function setupSheets() {
     log.appendRow([
       'timestamp',
       'card_name',
+      'card_english_name',
       'set_code',
       'collector_number',
       'foil',
       'status',
       'deck_id',
-      'method',
-      'scryfall_id'
+      'method'
     ]);
   }
 
-  // deck_summaryシート
-  let decks = ss.getSheetByName(SHEET_DECKS);
+  // DeckSummaryシート
+  let decks = ss.getSheetByName(SHEET_DECKS) || ss.getSheetByName('deck_summary');
 
   if (!decks) {
     decks = ss.insertSheet(SHEET_DECKS);
@@ -90,15 +104,15 @@ function setupSheets() {
 }
 
 /**
- * deck_summaryシートからデッキ一覧を取得
+ * DeckSummaryシートからデッキ一覧を取得
  */
 function getDecks() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_DECKS);
+  let sheet = ss.getSheetByName(SHEET_DECKS) || ss.getSheetByName('deck_summary');
 
   if (!sheet) {
     setupSheets();
-    sheet = ss.getSheetByName(SHEET_DECKS);
+    sheet = ss.getSheetByName(SHEET_DECKS) || ss.getSheetByName('deck_summary');
   }
 
   const values = sheet.getDataRange().getValues();
@@ -256,8 +270,8 @@ function registerCard(card) {
    * 必要なカラムを確認（存在しない場合は自動で末尾に追加）
    */
   const expectedColumns = [
-    'scryfall_id',
     'card_name',
+    'card_english_name',
     'color',
     'type',
     'mana_value',
@@ -268,7 +282,6 @@ function registerCard(card) {
     'status',
     'deck_id',
     'count',
-    'image_url',
     'updated_at'
   ];
 
@@ -289,9 +302,6 @@ function registerCard(card) {
 
   const now =
     new Date();
-
-  const scryfallId =
-    card.scryfall_id || '';
 
 
   /*
@@ -320,31 +330,49 @@ function registerCard(card) {
 
 
   /*
-   * scryfall_idで既存カードを検索
+   * 既存カードを検索
+   * 判定キー: セットコード + コレクター番号 + 言語 + foil
+   * （セット情報がない場合は カード名 + foil）
    */
+  const targetSetCode = String(card.set_code || '').trim().toLowerCase();
+  const targetCollectorNumber = String(card.collector_number || '').trim().toLowerCase();
+  const targetLanguage = String(card.language || '').trim().toLowerCase();
+  const targetFoil = String(card.foil || false).toLowerCase();
+  const targetCardName = String(card.card_name || '').trim().toLowerCase();
+  const targetCardEnglishName = String(card.card_english_name || '').trim().toLowerCase();
+
   for (
     let i = 1;
     i < values.length;
     i++
   ) {
+    const row = values[i];
+    const rowSetCode = columns['set_code'] ? String(row[columns['set_code'] - 1] || '').trim().toLowerCase() : '';
+    const rowCollectorNumber = columns['collector_number'] ? String(row[columns['collector_number'] - 1] || '').trim().toLowerCase() : '';
+    const rowLanguage = columns['language'] ? String(row[columns['language'] - 1] || '').trim().toLowerCase() : '';
+    const rowFoil = columns['foil'] ? String(row[columns['foil'] - 1] || false).toLowerCase() : 'false';
+    const rowCardName = columns['card_name'] ? String(row[columns['card_name'] - 1] || '').trim().toLowerCase() : '';
+    const rowCardEnglishName = columns['card_english_name'] ? String(row[columns['card_english_name'] - 1] || '').trim().toLowerCase() : '';
 
-    const value =
-      values[i][
-        columns['scryfall_id'] - 1
-      ];
-
-    if (
-      String(value) ===
-      String(scryfallId)
-    ) {
-
-      existingRow =
-        i + 1;
-
-      break;
-
+    if (targetSetCode && targetCollectorNumber) {
+      if (
+        rowSetCode === targetSetCode &&
+        rowCollectorNumber === targetCollectorNumber &&
+        (!targetLanguage || !rowLanguage || rowLanguage === targetLanguage) &&
+        rowFoil === targetFoil
+      ) {
+        existingRow = i + 1;
+        break;
+      }
+    } else if (targetCardName || targetCardEnglishName) {
+      if (
+        (rowCardName === targetCardName || (targetCardEnglishName && rowCardEnglishName === targetCardEnglishName)) &&
+        rowFoil === targetFoil
+      ) {
+        existingRow = i + 1;
+        break;
+      }
     }
-
   }
 
 
@@ -353,11 +381,11 @@ function registerCard(card) {
    */
   const cardData = {
 
-    scryfall_id:
-      card.scryfall_id || '',
-
     card_name:
       card.card_name || '',
+
+    card_english_name:
+      card.card_english_name || '',
 
     set_code:
       card.set_code || '',
@@ -376,9 +404,6 @@ function registerCard(card) {
 
     deck_id:
       deckId,
-
-    image_url:
-      card.image_url || '',
 
     color:
       card.color || '',
@@ -567,6 +592,8 @@ function registerCard(card) {
 
     card.card_name || '',
 
+    card.card_english_name || '',
+
     card.set_code || '',
 
     card.collector_number || '',
@@ -577,9 +604,7 @@ function registerCard(card) {
 
     deckId,
 
-    'Scryfall',
-
-    card.scryfall_id || ''
+    'Scryfall'
 
   ]);
 
@@ -589,7 +614,7 @@ function registerCard(card) {
     success: true,
 
     message:
-      card.card_name +
+      (card.card_name || card.card_english_name || 'カード') +
       ' を登録しました'
 
   };
@@ -1055,13 +1080,15 @@ console.log(
  * Geminiの情報と
  * Scryfallの正式情報を統合
  */
-
 return {
 
   is_mtg_card: true,
 
   card_name:
     scryfallCard.card_name,
+
+  card_english_name:
+    scryfallCard.card_english_name,
 
   set_code:
     scryfallCard.set_code,
@@ -1072,16 +1099,6 @@ return {
   language:
     scryfallCard.language,
 
-  scryfall_id:
-    scryfallCard.scryfall_id,
-
-  image_url:
-    scryfallCard.image_url,
-
-  oracle_name:
-    scryfallCard.oracle_name,
-
-  // 追加
   color:
     scryfallCard.color,
 
@@ -1113,6 +1130,18 @@ function doPost(e) {
       return jsonResponse({
         success: true,
         decks: decks
+      });
+    }
+
+    // カード検索
+    if (data.action === "searchCards") {
+      const cards =
+        typeof searchCards === 'function'
+          ? searchCards(data.criteria || {})
+          : [];
+      return jsonResponse({
+        success: true,
+        cards: cards
       });
     }
 
@@ -1163,6 +1192,9 @@ function jsonResponse(data) {
 /**
  * セットコード＋コレクター番号で
  * Scryfallからカードを完全照合する
+ *
+ * 1. まず日本語版エンドポイント (/cards/:code/:number/ja) を試行
+ * 2. 日本語版がなければ通常エンドポイント (/cards/:code/:number) を取得
  */
 function searchScryfallBySetAndCollector(
   setCode,
@@ -1175,15 +1207,48 @@ function searchScryfallBySetAndCollector(
     );
   }
 
+  const cleanSetCode =
+    String(setCode).toLowerCase().trim();
+
+  const cleanCollectorNumber =
+    String(collectorNumber).trim();
+
+  // 1. まず日本語版直接取得を試行
+  const jaUrl =
+    'https://api.scryfall.com/cards/' +
+    encodeURIComponent(cleanSetCode) +
+    '/' +
+    encodeURIComponent(cleanCollectorNumber) +
+    '/ja';
+
+  try {
+    const jaResponse =
+      UrlFetchApp.fetch(jaUrl, {
+        method: 'get',
+        headers: {
+          'User-Agent':
+            'MTG-Card-Scanner/1.0 contact: mtg-card-scanner',
+          'Accept':
+            'application/json;q=0.9,*/*;q=0.8'
+        },
+        muteHttpExceptions: true
+      });
+
+    if (jaResponse.getResponseCode() === 200) {
+      const jaCard =
+        JSON.parse(jaResponse.getContentText());
+      return convertScryfallCard(jaCard);
+    }
+  } catch (e) {
+    console.warn('日本語版直接取得スキップ: ' + e.message);
+  }
+
+  // 2. 日本語版が直接取れない場合はデフォルト印刷を取得
   const url =
     'https://api.scryfall.com/cards/' +
-    encodeURIComponent(
-      setCode.toLowerCase()
-    ) +
+    encodeURIComponent(cleanSetCode) +
     '/' +
-    encodeURIComponent(
-      collectorNumber
-    );
+    encodeURIComponent(cleanCollectorNumber);
 
   const response =
     UrlFetchApp.fetch(url, {
@@ -1236,8 +1301,8 @@ function setupPriceLog() {
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([
       'timestamp',
-      'scryfall_id',
       'card_name',
+      'card_english_name',
       'set_code',
       'collector_number',
       'min_price',
@@ -1363,139 +1428,296 @@ function getCardType(card) {
 }
 
 /**
-
- * Scryfallのカードデータを
-
- * アプリ内部で使う形式に変換
-
+ * カード名から「//」以降を除去し、第1面（表面）の名称のみを抽出
+ * 例: "Delver of Secrets // Insectile Aberration" -> "Delver of Secrets"
+ *     "秘密を掘り下げる者 // 昆虫の逸脱者" -> "秘密を掘り下げる者"
  */
+function cleanCardName(name) {
+  if (!name) {
+    return '';
+  }
+  const str = String(name).trim();
+  const slashIdx = str.indexOf('//');
+  if (slashIdx !== -1) {
+    return str.substring(0, slashIdx).trim();
+  }
+  return str;
+}
 
+/**
+ * Scryfall検索クエリを実行し、日本語カードオブジェクトから日本語名を抽出
+ * @param {string} query
+ * @return {string}
+ */
+function searchJapanesePrinting(query) {
+  try {
+    const url =
+      'https://api.scryfall.com/cards/search?q=' +
+      encodeURIComponent(query);
+
+    const response =
+      UrlFetchApp.fetch(url, {
+        method: 'get',
+        headers: {
+          'User-Agent':
+            'MTG-Card-Scanner/1.0 contact: mtg-card-scanner',
+          'Accept':
+            'application/json;q=0.9,*/*;q=0.8'
+        },
+        muteHttpExceptions: true
+      });
+
+    if (response.getResponseCode() === 200) {
+      const data =
+        JSON.parse(response.getContentText());
+
+      if (data.data && data.data.length > 0) {
+        for (let i = 0; i < data.data.length; i++) {
+          const cardObj = data.data[i];
+
+          // 1. 単面カードの printed_name
+          if (cardObj.printed_name) {
+            return cleanCardName(cardObj.printed_name);
+          }
+
+          // 2. 多面カード（両面・分割・当事者等）の 第1面の printed_name
+          if (cardObj.card_faces && Array.isArray(cardObj.card_faces) && cardObj.card_faces.length > 0) {
+            const firstFace = cardObj.card_faces[0];
+            if (firstFace.printed_name) {
+              return cleanCardName(firstFace.printed_name);
+            }
+            if (firstFace.name) {
+              return cleanCardName(firstFace.name);
+            }
+          }
+
+          // 3. printed_nameがなく、langがjaの場合のname
+          if (cardObj.lang === 'ja' && cardObj.name) {
+            return cleanCardName(cardObj.name);
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Scryfall日本語版検索失敗 (' + query + '): ' + e.message);
+  }
+  return '';
+}
+
+/**
+ * Scryfallから日本語名を取得・補完する
+ * @param {string} oracleId Scryfallのoracle_id
+ * @param {string} englishName 英語名
+ * @return {string} 日本語名
+ */
+function fetchJapaneseName(oracleId, englishName) {
+  if (!oracleId && !englishName) {
+    return '';
+  }
+
+  // 1. oracle_id による検索（言語に依存せず確実に同一カードを特定できるため最優先）
+  if (oracleId) {
+    const jaName =
+      searchJapanesePrinting('oracleid:' + oracleId + ' lang:ja include:extras');
+    if (jaName) {
+      return cleanCardName(jaName);
+    }
+  }
+
+  // 2. 英語オラクル名の完全一致による検索
+  if (englishName) {
+    const cleanName = cleanCardName(englishName).replace(/"/g, '');
+    const jaName =
+      searchJapanesePrinting('!"' + cleanName + '" lang:ja include:extras');
+    if (jaName) {
+      return cleanCardName(jaName);
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Scryfallから英語名を取得・補完する
+ * @param {string} oracleId Scryfallのoracle_id
+ * @param {string} cardName 日本語名など
+ * @return {string} 英語名
+ */
+function fetchEnglishName(oracleId, cardName) {
+  if (!oracleId && !cardName) {
+    return '';
+  }
+
+  try {
+    let url = '';
+    if (oracleId) {
+      url =
+        'https://api.scryfall.com/cards/search?q=' +
+        encodeURIComponent('oracleid:' + oracleId + ' lang:en');
+    } else {
+      url =
+        'https://api.scryfall.com/cards/named?fuzzy=' +
+        encodeURIComponent(cleanCardName(cardName));
+    }
+
+    const response =
+      UrlFetchApp.fetch(url, {
+        method: 'get',
+        headers: {
+          'User-Agent':
+            'MTG-Card-Scanner/1.0 contact: mtg-card-scanner',
+          'Accept':
+            'application/json;q=0.9,*/*;q=0.8'
+        },
+        muteHttpExceptions: true
+      });
+
+    if (response.getResponseCode() === 200) {
+      const data =
+        JSON.parse(response.getContentText());
+      if (data.data && data.data.length > 0) {
+        return cleanCardName(data.data[0].name || '');
+      }
+      if (data.name) {
+        return cleanCardName(data.name);
+      }
+    }
+  } catch (e) {
+    console.warn('英語名補完失敗: ' + e.message);
+  }
+  return '';
+}
+
+/**
+ * Scryfallカードオブジェクトから日本語名・英語名を抽出・補完
+ * ・元から判定できているものはそのまま使い、埋まっていないものだけ補完を行う
+ * ・「//」が含まれる場合はそれ以前の文字列のみを格納する
+ */
+function extractCardNames(card) {
+  let englishName = '';
+  let japaneseName = '';
+
+  // 1. 英語オラクル名
+  if (card.name) {
+    englishName = cleanCardName(card.name);
+  } else if (card.card_faces && card.card_faces[0] && card.card_faces[0].name) {
+    englishName = cleanCardName(card.card_faces[0].name);
+  }
+
+  // 2. 渡されたカードオブジェクト自体が日本語版の場合
+  if (card.lang === 'ja' || card.lang === 'japanese') {
+    if (card.printed_name) {
+      japaneseName = cleanCardName(card.printed_name);
+    } else if (card.card_faces && card.card_faces[0] && card.card_faces[0].printed_name) {
+      japaneseName = cleanCardName(card.card_faces[0].printed_name);
+    }
+  }
+
+  // 3. 日本語名が埋まっていない場合のみ、Scryfall検索で補完
+  if (!japaneseName) {
+    const fetchedJa =
+      fetchJapaneseName(card.oracle_id, englishName);
+    if (fetchedJa) {
+      japaneseName = cleanCardName(fetchedJa);
+    }
+  }
+
+  // 4. 英語名が埋まっていない場合のみ、Scryfall検索で補完
+  if (!englishName) {
+    const fetchedEn =
+      fetchEnglishName(card.oracle_id, japaneseName);
+    if (fetchedEn) {
+      englishName = cleanCardName(fetchedEn);
+    }
+  }
+
+  // 5. 日本語版印刷が存在しないカード（英語限定カード等）のフォールバック
+  if (!japaneseName) {
+    japaneseName = englishName;
+  }
+  if (!englishName) {
+    englishName = japaneseName;
+  }
+
+  return {
+    card_name: cleanCardName(japaneseName),
+    card_english_name: cleanCardName(englishName)
+  };
+}
+
+/**
+ * Scryfallのカードデータを
+ * アプリ内部で使う形式に変換
+ */
 function convertScryfallCard(card) {
 
   if (!card) {
-
     throw new Error(
-
       'Scryfallカード情報がありません'
-
     );
-
   }
 
   const color =
-
     getCardColor(card);
 
   const type =
-
     getCardType(card);
-
-  // mana_valueを優先
-
-  // 古い形式ではcmcの場合があるためフォールバック
 
   let manaValue = '';
 
   if (card.mana_value != null) {
-
     manaValue =
-
       card.mana_value;
-
   } else if (card.cmc != null) {
-
     manaValue =
-
       card.cmc;
-
   }
 
+  const names =
+    extractCardNames(card);
+
   const result = {
-
-    scryfall_id:
-
-      card.id || '',
-
     card_name:
+      names.card_name,
 
-      card.printed_name ||
-
-      card.name ||
-
-      '',
+    card_english_name:
+      names.card_english_name,
 
     set_code:
-
-      card.set ||
-
-      '',
+      card.set || '',
 
     collector_number:
-
-      card.collector_number ||
-
-      '',
+      card.collector_number || '',
 
     language:
-
-      card.lang ||
-
-      '',
+      card.lang || '',
 
     foil:
-
       false,
 
-    image_url:
-
-      card.image_uris
-
-        ? card.image_uris.normal
-
-        : '',
-
-    oracle_name:
-
-      card.name ||
-
-      '',
-
     color:
-
       color,
 
     type:
-
       type,
 
     mana_value:
-
       manaValue
-
   };
 
   console.log(
-
     '===== Scryfall変換結果 ====='
-
   );
 
   console.log(
-
     JSON.stringify(
-
       result,
-
       null,
-
       2
-
     )
-
   );
 
   return result;
-
 }
 
 /**

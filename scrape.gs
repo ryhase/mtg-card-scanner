@@ -158,7 +158,6 @@ function updateAllCardPrices() {
    * 必須カラム
    */
   const requiredColumns = [
-    'scryfall_id',
     'card_name',
     'set_code',
     'collector_number',
@@ -335,11 +334,11 @@ function updateAllCardPrices() {
 
         new Date(),
 
-        data[i][
-          columns['scryfall_id'] - 1
-        ],
-
         cardName,
+
+        columns['card_english_name']
+          ? data[i][columns['card_english_name'] - 1]
+          : '',
 
         data[i][
           columns['set_code'] - 1
