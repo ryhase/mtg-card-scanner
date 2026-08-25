@@ -586,6 +586,48 @@ button {
   font-size: 15px;
 }
 
+.card-item {
+  cursor: pointer;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 20px;
+  border: 1px solid #444;
+  border-radius: 14px;
+  background: #1e1e1e;
+}
+
+.modal-title {
+  margin: 0 0 16px;
+  font-size: 20px;
+}
+
+.danger-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #991b1b;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}
+
 </style>
 
 </head>
@@ -598,6 +640,7 @@ button {
 
 <nav id="appNav">
   <button id="navScan" class="nav-btn active" type="button">📷 スキャナー</button>
+  <button id="navManual" class="nav-btn" type="button">⌨️ 番号登録</button>
   <button id="navSearch" class="nav-btn" type="button">🔍 カード検索</button>
 </nav>
 
@@ -741,6 +784,57 @@ button {
   </div>
 </div>
 
+<!-- セットコード・番号からの登録画面 -->
+<div id="manualView" style="display:none;">
+  <div class="search-container" style="padding: 15px 0;">
+    <div class="search-panel">
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label for="manualSetCode" class="form-label">セットコード：</label>
+          <input id="manualSetCode" class="form-input" placeholder="例: dmu" autocapitalize="none">
+        </div>
+        <div class="form-group flex-1">
+          <label for="manualCollectorNumber" class="form-label">コレクター番号：</label>
+          <input id="manualCollectorNumber" class="form-input" placeholder="例: 58">
+        </div>
+      </div>
+      <div class="search-btn-row">
+        <button id="btnLookupCard" class="btn-primary" type="button">Scryfallで確認</button>
+      </div>
+      <div id="manualLookupError" style="color:#ff7777; white-space:pre-wrap; margin-top:12px;"></div>
+    </div>
+
+    <div id="manualRegisterPanel" class="search-panel" style="display:none;">
+      <div id="manualCardInfo" class="info"></div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label for="manualLanguage" class="form-label">言語：</label>
+        <select id="manualLanguage" class="form-select">
+          <option value="">言語を選択</option>
+          <option value="ja">日本語 (ja)</option><option value="en">英語 (en)</option>
+          <option value="es">スペイン語 (es)</option><option value="fr">フランス語 (fr)</option>
+          <option value="de">ドイツ語 (de)</option><option value="it">イタリア語 (it)</option>
+          <option value="pt">ポルトガル語 (pt)</option><option value="ko">韓国語 (ko)</option>
+          <option value="ru">ロシア語 (ru)</option><option value="zhs">簡体字中国語 (zhs)</option>
+          <option value="zht">繁体字中国語 (zht)</option><option value="he">ヘブライ語 (he)</option>
+          <option value="la">ラテン語 (la)</option><option value="grc">古代ギリシャ語 (grc)</option>
+          <option value="ar">アラビア語 (ar)</option><option value="sa">サンスクリット語 (sa)</option>
+          <option value="ph">ファイレクシア語 (ph)</option><option value="qya">クウェニヤ語 (qya)</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin-bottom:12px;">
+        <div class="form-group flex-1"><label for="manualCount" class="form-label">枚数：</label><input id="manualCount" class="form-input" type="number" min="1" step="1" value="1"></div>
+        <div class="form-group flex-1"><label for="manualFoil" class="form-label">仕様：</label><select id="manualFoil" class="form-select"><option value="false">通常版</option><option value="true">Foil</option></select></div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label for="manualStatus" class="form-label">ステータス：</label>
+        <select id="manualStatus" class="form-select"><option value="storage">ストレージ</option><option value="deck">デッキ</option><option value="case">ケース</option><option value="selling">販売中</option></select>
+      </div>
+      <div id="manualDeckGroup" class="form-group" style="display:none; margin-bottom:12px;"><label for="manualDeck" class="form-label">デッキ：</label><select id="manualDeck" class="form-select"></select></div>
+      <button id="btnManualRegister" class="btn-primary" type="button">✅ この内容で登録</button>
+    </div>
+  </div>
+</div>
+
 <!-- 検索画面 -->
 <div id="searchView" style="display:none;">
   <div class="search-container">
@@ -818,6 +912,23 @@ button {
   </div>
 </div>
 
+<!-- 検索結果の編集 -->
+<div id="cardEditModal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <h2 class="modal-title">カード情報を編集</h2>
+    <div id="editCardInfo" class="info"></div>
+    <div class="form-group" style="margin-bottom:12px;"><label for="editCount" class="form-label">変更後の枚数（0で削除）：</label><input id="editCount" class="form-input" type="number" min="0" step="1"></div>
+    <button id="btnSaveCount" class="btn-primary" type="button">枚数を更新</button>
+    <div style="border-top:1px solid #444; margin:20px 0;"></div>
+    <div class="form-group" style="margin-bottom:12px;"><label for="moveStatus" class="form-label">移動先ステータス：</label><select id="moveStatus" class="form-select"><option value="storage">ストレージ</option><option value="deck">デッキ</option><option value="case">ケース</option><option value="selling">販売中</option></select></div>
+    <div id="moveDeckGroup" class="form-group" style="display:none; margin-bottom:12px;"><label for="moveDeck" class="form-label">移動先デッキ：</label><select id="moveDeck" class="form-select"></select></div>
+    <div class="form-group" style="margin-bottom:12px;"><label for="moveCount" class="form-label">移動する枚数：</label><input id="moveCount" class="form-input" type="number" min="1" step="1"></div>
+    <button id="btnMoveStatus" class="btn-primary" type="button">ステータスを変更</button>
+    <button id="btnDeleteCard" class="danger-btn" type="button">このカード情報を削除</button>
+    <button id="btnCloseEdit" class="btn-secondary" style="width:100%; margin-top:12px;" type="button">閉じる</button>
+  </div>
+</div>
+
 <canvas
   id="canvas"
   style="display:none">
@@ -830,7 +941,7 @@ button {
  * Google Apps Script Web App
  */
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbxfQjJffFoC4FAwB0NpJqc-V5VCr4mADV4CZ8KjdMYUdd6vTtysGeLTu0WVH4o1Hpk/exec";
+  "https://script.google.com/macros/s/AKfycbwgnqT-gGev-QNe7xXHWZ7B0IVh56Y2b7eCMjElWvaRThZ5xki6VA3AKjHn9L3eLKo/exec";
 
 let stream = null;
 let lastResult = null;
@@ -1216,6 +1327,12 @@ async function loadDecks() {
       deckList = data.decks;
       isDeckListLoaded = true;
       updateDeckSelectOptions();
+      if (typeof manualStatus !== "undefined" && manualStatus.value === "deck") {
+        populateDeckOptions(manualDeck, manualDeck.value);
+      }
+      if (typeof moveStatus !== "undefined" && moveStatus.value === "deck") {
+        populateDeckOptions(moveDeck, moveDeck.value);
+      }
     }
   } catch (err) {
     console.error("デッキ一覧の取得に失敗しました:", err);
@@ -1664,11 +1781,17 @@ scanButton.addEventListener(
 const navScan =
   document.getElementById("navScan");
 
+const navManual =
+  document.getElementById("navManual");
+
 const navSearch =
   document.getElementById("navSearch");
 
 const scannerView =
   document.getElementById("scannerView");
+
+const manualView =
+  document.getElementById("manualView");
 
 const searchView =
   document.getElementById("searchView");
@@ -1703,22 +1826,192 @@ const searchSummary =
 const searchResultsList =
   document.getElementById("searchResultsList");
 
+const manualSetCode = document.getElementById("manualSetCode");
+const manualCollectorNumber = document.getElementById("manualCollectorNumber");
+const btnLookupCard = document.getElementById("btnLookupCard");
+const manualLookupError = document.getElementById("manualLookupError");
+const manualRegisterPanel = document.getElementById("manualRegisterPanel");
+const manualCardInfo = document.getElementById("manualCardInfo");
+const manualLanguage = document.getElementById("manualLanguage");
+const manualCount = document.getElementById("manualCount");
+const manualFoil = document.getElementById("manualFoil");
+const manualStatus = document.getElementById("manualStatus");
+const manualDeckGroup = document.getElementById("manualDeckGroup");
+const manualDeck = document.getElementById("manualDeck");
+const btnManualRegister = document.getElementById("btnManualRegister");
+const cardEditModal = document.getElementById("cardEditModal");
+const editCardInfo = document.getElementById("editCardInfo");
+const editCount = document.getElementById("editCount");
+const btnSaveCount = document.getElementById("btnSaveCount");
+const moveStatus = document.getElementById("moveStatus");
+const moveDeckGroup = document.getElementById("moveDeckGroup");
+const moveDeck = document.getElementById("moveDeck");
+const moveCount = document.getElementById("moveCount");
+const btnMoveStatus = document.getElementById("btnMoveStatus");
+const btnDeleteCard = document.getElementById("btnDeleteCard");
+const btnCloseEdit = document.getElementById("btnCloseEdit");
+let manualCard = null;
+let editingCard = null;
+
 // タブ切り替え
 navScan.addEventListener("click", function() {
   navScan.classList.add("active");
+  navManual.classList.remove("active");
   navSearch.classList.remove("active");
   scannerView.style.display = "block";
+  manualView.style.display = "none";
+  searchView.style.display = "none";
+});
+
+navManual.addEventListener("click", function() {
+  navScan.classList.remove("active");
+  navManual.classList.add("active");
+  navSearch.classList.remove("active");
+  scannerView.style.display = "none";
+  manualView.style.display = "block";
   searchView.style.display = "none";
 });
 
 navSearch.addEventListener("click", function() {
   navSearch.classList.add("active");
   navScan.classList.remove("active");
+  navManual.classList.remove("active");
   scannerView.style.display = "none";
+  manualView.style.display = "none";
   searchView.style.display = "block";
   // 初回表示時に検索欄が空ならプレビュー検索（全件検索など）
   if (searchResultsList.children.length === 0) {
     performSearch();
+  }
+});
+
+async function postApi(action, payload) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(Object.assign({ action: action }, payload || {}))
+  });
+  if (!response.ok) {
+    throw new Error("HTTPエラー: " + response.status);
+  }
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(data.error || "処理に失敗しました");
+  }
+  return data;
+}
+
+function populateDeckOptions(select, selectedDeckId) {
+  select.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = deckList.length ? "(デッキを選択)" : "登録されているデッキがありません";
+  select.appendChild(placeholder);
+  deckList.forEach(function(deck) {
+    const option = document.createElement("option");
+    option.value = deck.deck_id;
+    option.textContent = deck.deck_name;
+    select.appendChild(option);
+  });
+  select.value = selectedDeckId || "";
+}
+
+function toggleManualDeck() {
+  const isDeck = manualStatus.value === "deck";
+  manualDeckGroup.style.display = isDeck ? "block" : "none";
+  if (isDeck) {
+    populateDeckOptions(manualDeck, manualDeck.value);
+  }
+}
+
+function toggleMoveDeck() {
+  const isDeck = moveStatus.value === "deck";
+  moveDeckGroup.style.display = isDeck ? "block" : "none";
+  if (isDeck) {
+    populateDeckOptions(moveDeck, moveDeck.value);
+  }
+}
+
+function validPositiveInteger(value) {
+  const number = Number(value);
+  return Number.isInteger(number) && number > 0 ? number : null;
+}
+
+btnLookupCard.addEventListener("click", async function() {
+  const setCode = manualSetCode.value.trim();
+  const collectorNumber = manualCollectorNumber.value.trim();
+  if (!setCode || !collectorNumber) {
+    manualLookupError.textContent = "セットコードとコレクター番号を入力してください。";
+    return;
+  }
+
+  try {
+    btnLookupCard.disabled = true;
+    btnLookupCard.textContent = "確認中…";
+    manualLookupError.style.color = "#ff7777";
+    manualLookupError.textContent = "";
+    const data = await postApi("lookupCard", {
+      set_code: setCode,
+      collector_number: collectorNumber
+    });
+    manualCard = data.card;
+    manualCardInfo.innerHTML = "<b>" + escapeHtml(manualCard.card_name || manualCard.card_english_name || "名称不明") +
+      "</b><br>英語名: " + escapeHtml(manualCard.card_english_name || "-") +
+      "<br>セット: " + escapeHtml(manualCard.set_code || "-") + " #" + escapeHtml(manualCard.collector_number || "-") +
+      "<br>種別: " + escapeHtml(manualCard.type || "-");
+    manualLanguage.value = manualCard.language || "";
+    manualCount.value = "1";
+    manualFoil.value = "false";
+    manualStatus.value = "storage";
+    toggleManualDeck();
+    manualRegisterPanel.style.display = "block";
+  } catch (error) {
+    manualCard = null;
+    manualRegisterPanel.style.display = "none";
+    manualLookupError.textContent = "検索エラー：\n" + error.message;
+  } finally {
+    btnLookupCard.disabled = false;
+    btnLookupCard.textContent = "Scryfallで確認";
+  }
+});
+
+manualStatus.addEventListener("change", toggleManualDeck);
+
+btnManualRegister.addEventListener("click", async function() {
+  if (!manualCard) {
+    return;
+  }
+  const count = validPositiveInteger(manualCount.value);
+  if (!count) {
+    alert("枚数は1以上の整数で入力してください。");
+    return;
+  }
+  const deckId = manualStatus.value === "deck" ? manualDeck.value : "";
+  if (manualStatus.value === "deck" && !deckId) {
+    alert("デッキを選択してください。");
+    return;
+  }
+
+  try {
+    btnManualRegister.disabled = true;
+    const card = Object.assign({}, manualCard, {
+      language: manualLanguage.value || manualCard.language || "",
+      count: count,
+      foil: manualFoil.value === "true",
+      status: manualStatus.value,
+      deck_id: deckId
+    });
+    delete card.oracle_id;
+    await postApi("register", { card: card });
+    manualLookupError.style.color = "#86efac";
+    manualLookupError.textContent = "登録しました。";
+    manualRegisterPanel.style.display = "none";
+    manualCard = null;
+  } catch (error) {
+    manualLookupError.style.color = "#ff7777";
+    manualLookupError.textContent = "登録エラー：\n" + error.message;
+  } finally {
+    btnManualRegister.disabled = false;
   }
 });
 
@@ -1819,7 +2112,7 @@ function renderSearchResults(cards) {
     const deckName = card.deck_name || "";
 
     html += `
-      <div class="card-item">
+      <div class="card-item" data-row-number="${card.row_number}">
         <div class="card-item-header">
           <div class="card-item-title-wrap">
             <span class="card-item-name">${escapeHtml(jaName || enName || '名称不明')}</span>
@@ -1848,7 +2141,105 @@ function renderSearchResults(cards) {
   });
 
   searchResultsList.innerHTML = html;
+  searchResultsList.querySelectorAll(".card-item").forEach(function(item) {
+    item.addEventListener("click", function() {
+      const rowNumber = Number(item.getAttribute("data-row-number"));
+      const card = cards.find(function(result) {
+        return Number(result.row_number) === rowNumber;
+      });
+      if (card) {
+        openCardEditor(card);
+      }
+    });
+  });
 }
+
+function openCardEditor(card) {
+  editingCard = card;
+  editCardInfo.innerHTML = "<b>" + escapeHtml(card.card_name || card.card_english_name || "名称不明") +
+    "</b><br>セット: " + escapeHtml(card.set_code || "-") + " #" + escapeHtml(card.collector_number || "-") +
+    "<br>言語: " + escapeHtml(card.language || "-") +
+    " / " + (card.foil ? "Foil" : "通常版") +
+    "<br>現在のステータス: " + escapeHtml(statusLabel(card.status));
+  editCount.value = String(card.count);
+  moveCount.value = String(card.count);
+  moveStatus.value = card.status === "storage" ? "case" : "storage";
+  populateDeckOptions(moveDeck, "");
+  toggleMoveDeck();
+  cardEditModal.style.display = "flex";
+}
+
+btnCloseEdit.addEventListener("click", function() {
+  cardEditModal.style.display = "none";
+  editingCard = null;
+});
+
+moveStatus.addEventListener("change", toggleMoveDeck);
+
+btnSaveCount.addEventListener("click", async function() {
+  if (!editingCard) {
+    return;
+  }
+  const count = Number(editCount.value);
+  if (!Number.isInteger(count) || count < 0) {
+    alert("枚数は0以上の整数で入力してください。");
+    return;
+  }
+  if (count === 0 && !confirm("0枚のため、このカード情報を削除します。よろしいですか？")) {
+    return;
+  }
+  try {
+    await postApi("updateCardCount", { row_number: editingCard.row_number, count: count });
+    cardEditModal.style.display = "none";
+    editingCard = null;
+    await performSearch();
+  } catch (error) {
+    alert("更新エラー：\n" + error.message);
+  }
+});
+
+btnMoveStatus.addEventListener("click", async function() {
+  if (!editingCard) {
+    return;
+  }
+  const count = validPositiveInteger(moveCount.value);
+  const deckId = moveStatus.value === "deck" ? moveDeck.value : "";
+  if (!count || count > editingCard.count) {
+    alert("移動枚数は現在の枚数の範囲で入力してください。");
+    return;
+  }
+  if (moveStatus.value === "deck" && !deckId) {
+    alert("移動先のデッキを選択してください。");
+    return;
+  }
+  try {
+    await postApi("moveCardStatus", {
+      row_number: editingCard.row_number,
+      status: moveStatus.value,
+      deck_id: deckId,
+      count: count
+    });
+    cardEditModal.style.display = "none";
+    editingCard = null;
+    await performSearch();
+  } catch (error) {
+    alert("ステータス変更エラー：\n" + error.message);
+  }
+});
+
+btnDeleteCard.addEventListener("click", async function() {
+  if (!editingCard || !confirm("このカード情報を削除します。よろしいですか？")) {
+    return;
+  }
+  try {
+    await postApi("deleteCard", { row_number: editingCard.row_number });
+    cardEditModal.style.display = "none";
+    editingCard = null;
+    await performSearch();
+  } catch (error) {
+    alert("削除エラー：\n" + error.message);
+  }
+});
 
 // フォームリセット
 function resetSearchForm() {

@@ -405,6 +405,8 @@ function registerCard(card) {
   const targetCollectorNumber = String(card.collector_number || '').trim().toLowerCase();
   const targetLanguage = String(card.language || '').trim().toLowerCase();
   const targetFoil = String(card.foil || false).toLowerCase();
+  const targetStatus = status;
+  const targetDeckId = deckId;
   const targetCardName = String(registeredCardName || '').trim().toLowerCase();
   const targetCardEnglishName = String(card.card_english_name || '').trim().toLowerCase();
 
@@ -418,6 +420,8 @@ function registerCard(card) {
     const rowCollectorNumber = columns['collector_number'] ? String(row[columns['collector_number'] - 1] || '').trim().toLowerCase() : '';
     const rowLanguage = columns['language'] ? String(row[columns['language'] - 1] || '').trim().toLowerCase() : '';
     const rowFoil = columns['foil'] ? String(row[columns['foil'] - 1] || false).toLowerCase() : 'false';
+    const rowStatus = columns['status'] ? String(row[columns['status'] - 1] || 'storage').trim().toLowerCase() : 'storage';
+    const rowDeckId = columns['deck_id'] ? String(row[columns['deck_id'] - 1] || '').trim() : '';
     const rowCardName = columns['card_name'] ? String(row[columns['card_name'] - 1] || '').trim().toLowerCase() : '';
     const rowCardEnglishName = columns['card_english_name'] ? String(row[columns['card_english_name'] - 1] || '').trim().toLowerCase() : '';
 
@@ -426,7 +430,9 @@ function registerCard(card) {
         rowSetCode === targetSetCode &&
         rowCollectorNumber === targetCollectorNumber &&
         (!targetLanguage || !rowLanguage || rowLanguage === targetLanguage) &&
-        rowFoil === targetFoil
+        rowFoil === targetFoil &&
+        rowStatus === targetStatus &&
+        (targetStatus !== 'deck' || rowDeckId === targetDeckId)
       ) {
         existingRow = i + 1;
         break;
@@ -434,7 +440,9 @@ function registerCard(card) {
     } else if (targetCardName || targetCardEnglishName) {
       if (
         (rowCardName === targetCardName || (targetCardEnglishName && rowCardEnglishName === targetCardEnglishName)) &&
-        rowFoil === targetFoil
+        rowFoil === targetFoil &&
+        rowStatus === targetStatus &&
+        (targetStatus !== 'deck' || rowDeckId === targetDeckId)
       ) {
         existingRow = i + 1;
         break;
@@ -686,6 +694,114 @@ function registerCard(card) {
 
   };
 
+}
+
+/**
+ * 検索結果で使用するCardsシートの1行を取得する。
+ */
+function getCardByRowNumber(rowNumber) {
+  const row = Number(rowNumber);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_CARDS);
+
+  if (!sheet || !Number.isInteger(row) || row < 2 || row > sheet.getLastRow()) {
+    throw new Error('対象のカードが見つかりません');
+  }
+
+  const columns = getColumnMap(sheet);
+  const values = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const getValue = function(key) {
+    return columns[key] ? values[columns[key] - 1] : '';
+  };
+
+  return {
+    row_number: row,
+    card_name: String(getValue('card_name') || '').trim(),
+    card_english_name: String(getValue('card_english_name') || '').trim(),
+    color: String(getValue('color') || '').trim(),
+    type: String(getValue('type') || '').trim(),
+    mana_value: getValue('mana_value'),
+    set_code: String(getValue('set_code') || '').trim(),
+    collector_number: String(getValue('collector_number') || '').trim(),
+    language: String(getValue('language') || '').trim(),
+    foil: String(getValue('foil')).toLowerCase() === 'true',
+    status: String(getValue('status') || 'storage').trim().toLowerCase(),
+    deck_id: String(getValue('deck_id') || '').trim(),
+    count: Number(getValue('count')) || 1
+  };
+}
+
+function updateCardCount(rowNumber, count) {
+  const newCount = Number(count);
+  const card = getCardByRowNumber(rowNumber);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_CARDS);
+
+  if (!Number.isInteger(newCount) || newCount < 0) {
+    throw new Error('枚数は0以上の整数で指定してください');
+  }
+
+  if (newCount === 0) {
+    sheet.deleteRow(card.row_number);
+    return { success: true, deleted: true, message: 'カードを削除しました' };
+  }
+
+  const columns = getColumnMap(sheet);
+  sheet.getRange(card.row_number, columns['count']).setValue(newCount);
+  if (columns['updated_at']) {
+    sheet.getRange(card.row_number, columns['updated_at']).setValue(new Date());
+  }
+
+  return { success: true, deleted: false, message: '枚数を更新しました' };
+}
+
+function deleteCard(rowNumber) {
+  const card = getCardByRowNumber(rowNumber);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_CARDS);
+  sheet.deleteRow(card.row_number);
+  return { success: true, message: 'カードを削除しました' };
+}
+
+function moveCardStatus(rowNumber, newStatus, newDeckId, moveCount) {
+  const card = getCardByRowNumber(rowNumber);
+  const count = Number(moveCount);
+  const allowedStatuses = ['deck', 'case', 'storage', 'selling'];
+  const status = String(newStatus || '').trim().toLowerCase();
+  const deckId = status === 'deck' ? String(newDeckId || '').trim() : '';
+
+  if (allowedStatuses.indexOf(status) === -1) {
+    throw new Error('変更先のステータスが不正です');
+  }
+  if (!Number.isInteger(count) || count < 1 || count > card.count) {
+    throw new Error('移動枚数は現在の枚数の範囲で指定してください');
+  }
+  if (status === 'deck' && !deckId) {
+    throw new Error('デッキを選択してください');
+  }
+  if (card.status === status && (status !== 'deck' || card.deck_id === deckId)) {
+    throw new Error('変更先が現在のステータスと同じです');
+  }
+
+  // 先に移動先を登録し、成功した場合だけ移動元を減らす。
+  const destinationCard = Object.assign({}, card, {
+    status: status,
+    deck_id: deckId,
+    count: count
+  });
+  registerCard(destinationCard);
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_CARDS);
+  const columns = getColumnMap(sheet);
+  if (count === card.count) {
+    sheet.deleteRow(card.row_number);
+  } else {
+    sheet.getRange(card.row_number, columns['count']).setValue(card.count - count);
+    if (columns['updated_at']) {
+      sheet.getRange(card.row_number, columns['updated_at']).setValue(new Date());
+    }
+  }
+
+  return { success: true, message: 'ステータスを変更しました' };
 }
 
 
@@ -1225,6 +1341,17 @@ function doPost(e) {
       });
     }
 
+    // セットコード・コレクター番号からカード情報を取得
+    if (data.action === "lookupCard") {
+      return jsonResponse({
+        success: true,
+        card: searchScryfallBySetAndCollector(
+          data.set_code,
+          data.collector_number
+        )
+      });
+    }
+
     // 登録
     if (data.action === "register") {
       const result =
@@ -1234,6 +1361,23 @@ function doPost(e) {
       return jsonResponse(
         result
       );
+    }
+
+    if (data.action === "updateCardCount") {
+      return jsonResponse(updateCardCount(data.row_number, data.count));
+    }
+
+    if (data.action === "deleteCard") {
+      return jsonResponse(deleteCard(data.row_number));
+    }
+
+    if (data.action === "moveCardStatus") {
+      return jsonResponse(moveCardStatus(
+        data.row_number,
+        data.status,
+        data.deck_id,
+        data.count
+      ));
     }
 
     // カード判定
