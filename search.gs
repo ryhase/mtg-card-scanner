@@ -78,7 +78,9 @@ function searchCards(criteria) {
     const setCode = columns['set_code'] ? String(row[columns['set_code'] - 1] || '').trim() : '';
     const collectorNumber = columns['collector_number'] ? String(row[columns['collector_number'] - 1] || '').trim() : '';
     const language = columns['language'] ? String(row[columns['language'] - 1] || '').trim() : '';
-    const foil = columns['foil'] ? Boolean(row[columns['foil'] - 1]) : false;
+    const foil = columns['foil']
+      ? String(row[columns['foil'] - 1]).toLowerCase() === 'true'
+      : false;
     const status = columns['status'] ? String(row[columns['status'] - 1] || '').trim().toLowerCase() : '';
     const deckId = columns['deck_id'] ? String(row[columns['deck_id'] - 1] || '').trim() : '';
     const count = columns['count'] ? Number(row[columns['count'] - 1]) || 1 : 1;
@@ -168,6 +170,7 @@ function searchCards(criteria) {
     }
 
     results.push({
+      row_number: i + 1,
       card_name: cardName,
       card_english_name: cardEnglishName,
       color: color,
